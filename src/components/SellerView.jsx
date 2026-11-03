@@ -16,7 +16,8 @@ import {
     PRODUCT_CATALOG,
     PAYMENT_METHODS,
     SALES_CHANNELS,
-    WEEKS_CALENDAR,
+    getDynamicWeeksCalendar,
+    getCurrentWeekId,
     getWeekIdFromDate
 } from '../data/seedData';
 
@@ -28,11 +29,14 @@ export default function SellerView({
     onDeleteSale,
     canDelete = false
 }) {
-    // Por defecto inicia el Lunes 2 de Noviembre de 2026 (Semana 8 - Falta por pagar)
-    const [selectedWeekId, setSelectedWeekId] = useState(8);
+    const currentWeekId = getCurrentWeekId();
+    const weeksList = getDynamicWeeksCalendar(sales);
+    const todayIso = new Date().toISOString().split('T')[0];
+
+    const [selectedWeekId, setSelectedWeekId] = useState(currentWeekId);
     const [formData, setFormData] = useState({
-        sale_date: '2026-11-02',
-        week_id: 8,
+        sale_date: todayIso >= '2026-11-02' ? todayIso : '2026-11-02',
+        week_id: currentWeekId,
         client_name: '',
         product: 'Adobe',
         price_usd: 6,
@@ -45,7 +49,8 @@ export default function SellerView({
     const [editingId, setEditingId] = useState(null);
     const [editDraft, setEditDraft] = useState({});
 
-    const activeWeekObj = WEEKS_CALENDAR.find((w) => w.id === Number(selectedWeekId)) || WEEKS_CALENDAR[7];
+    const activeWeekObj =
+        weeksList.find((w) => w.id === Number(selectedWeekId)) || weeksList[weeksList.length - 1];
     const isWeekPaid = Boolean(paidWeeks?.[selectedWeekId]);
 
     const handleSelectWeekTab = (weekObj) => {
@@ -143,7 +148,6 @@ export default function SellerView({
 
     return (
         <div className="space-y-6">
-            {/* Selector de Semanas Calendario con Estado de Pago */}
             <div className="rounded-2xl border border-slate-800 bg-[#12141D] p-4">
                 <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                     <div className="flex items-center gap-2">
@@ -158,7 +162,7 @@ export default function SellerView({
                 </div>
 
                 <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4 lg:grid-cols-8">
-                    {WEEKS_CALENDAR.slice(0, 8).map((w) => {
+                    {weeksList.map((w) => {
                         const paid = Boolean(paidWeeks?.[w.id]);
                         const count = sales.filter((s) => Number(s.week_id) === w.id).length;
                         const isSelected = Number(selectedWeekId) === w.id;
@@ -167,8 +171,8 @@ export default function SellerView({
                                 key={w.id}
                                 onClick={() => handleSelectWeekTab(w)}
                                 className={`flex flex-col justify-between rounded-xl border p-2.5 text-left transition ${isSelected
-                                    ? 'border-violet-500 bg-violet-600/15 shadow-lg shadow-violet-600/10'
-                                    : 'border-slate-800 bg-[#090A0F] hover:border-slate-700'
+                                        ? 'border-violet-500 bg-violet-600/15 shadow-lg shadow-violet-600/10'
+                                        : 'border-slate-800 bg-[#090A0F] hover:border-slate-700'
                                     }`}
                             >
                                 <div className="flex items-center justify-between">
@@ -200,7 +204,6 @@ export default function SellerView({
             </div>
 
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-                {/* Formulario de Registro */}
                 <div className="rounded-2xl border border-slate-800 bg-[#12141D] p-5 lg:col-span-2">
                     <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
                         <h2 className="flex items-center gap-2 text-base font-semibold text-white">
@@ -326,7 +329,6 @@ export default function SellerView({
                     </form>
                 </div>
 
-                {/* Tarjeta de Liquidación y Estado de Pago Semanal */}
                 <div className="flex flex-col justify-between rounded-2xl border border-slate-800 bg-[#12141D] p-5">
                     <div>
                         <div className="flex items-center justify-between gap-2">
@@ -379,8 +381,8 @@ export default function SellerView({
 
                     <div
                         className={`mt-4 rounded-xl border p-3 text-xs ${isWeekPaid
-                            ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300'
-                            : 'border-amber-500/30 bg-amber-500/10 text-amber-200'
+                                ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300'
+                                : 'border-amber-500/30 bg-amber-500/10 text-amber-200'
                             }`}
                     >
                         {isWeekPaid ? (
@@ -391,14 +393,13 @@ export default function SellerView({
                         ) : (
                             <div className="flex items-center gap-2 font-medium">
                                 <Clock className="h-4 w-4 shrink-0 text-amber-400" />
-                                <span>Semana en curso (desde Lunes 2 Nov): pendiente de cierre y pago.</span>
+                                <span>Semana pendiente de cierre y liquidación al vendedor.</span>
                             </div>
                         )}
                     </div>
                 </div>
             </div>
 
-            {/* Tabla de Ventas de la Semana Seleccionada */}
             <div className="rounded-2xl border border-slate-800 bg-[#12141D] p-5">
                 <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                     <div className="flex flex-wrap items-center gap-2.5">

@@ -10,30 +10,76 @@ export const PAYMENT_METHODS = ['Pago Móvil', 'Binance', 'Zinli', 'Transferenci
 export const SALES_CHANNELS = ['Meta Ads', 'Instagram @tivadesign_', 'WhatsApp Directo', 'Web / Marketplace'];
 
 // Calendario oficial de Semanas TIVA DESIGN (Lunes a Domingo)
-export const WEEKS_CALENDAR = [
-    { id: 1, label: 'Semana 1', rangeText: 'Lun 14 Sep – Dom 20 Sep 2026', start: '2026-09-14', end: '2026-09-20', defaultPaid: true },
-    { id: 2, label: 'Semana 2', rangeText: 'Lun 21 Sep – Dom 27 Sep 2026', start: '2026-09-21', end: '2026-09-27', defaultPaid: true },
-    { id: 3, label: 'Semana 3', rangeText: 'Lun 28 Sep – Dom 04 Oct 2026', start: '2026-09-28', end: '2026-10-04', defaultPaid: true },
-    { id: 4, label: 'Semana 4', rangeText: 'Lun 05 Oct – Dom 11 Oct 2026', start: '2026-10-05', end: '2026-10-11', defaultPaid: true },
-    { id: 5, label: 'Semana 5', rangeText: 'Lun 12 Oct – Dom 18 Oct 2026', start: '2026-10-12', end: '2026-10-18', defaultPaid: true },
-    { id: 6, label: 'Semana 6', rangeText: 'Lun 19 Oct – Dom 25 Oct 2026', start: '2026-10-19', end: '2026-10-25', defaultPaid: true },
-    { id: 7, label: 'Semana 7', rangeText: 'Lun 26 Oct – Dom 01 Nov 2026', start: '2026-10-26', end: '2026-11-01', defaultPaid: true },
-    { id: 8, label: 'Semana 8 (Actual)', rangeText: 'Lun 02 Nov – Dom 08 Nov 2026', start: '2026-11-02', end: '2026-11-08', defaultPaid: false },
-    { id: 9, label: 'Semana 9', rangeText: 'Lun 09 Nov – Dom 15 Nov 2026', start: '2026-11-09', end: '2026-11-15', defaultPaid: false }
-];
+// Fecha ancla oficial de TIVA DESIGN: Lunes 14 de Septiembre de 2026 (Semana 1)
+const ANCHOR_MONDAY_UTC = Date.UTC(2026, 8, 14); // Mes 8 en JS = Septiembre
+const MS_PER_DAY = 86400000;
+const SHORT_MONTHS = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+
+function toIsoDateUTC(ms) {
+    const d = new Date(ms);
+    const yyyy = d.getUTCFullYear();
+    const mm = String(d.getUTCMonth() + 1).padStart(2, '0');
+    const dd = String(d.getUTCDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+}
+
+function toHumanDateUTC(ms) {
+    const d = new Date(ms);
+    return `${String(d.getUTCDate()).padStart(2, '0')} ${SHORT_MONTHS[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
+}
+
+// Calcula automáticamente a qué número de semana (Lunes a Domingo) pertenece cualquier fecha
+export function getWeekIdFromDate(dateStr) {
+    if (!dateStr) return getCurrentWeekId();
+    const [y, m, d] = dateStr.split('-').map(Number);
+    if (!y || !m || !d) return getCurrentWeekId();
+    const targetUTC = Date.UTC(y, m - 1, d);
+    const diffDays = Math.floor((targetUTC - ANCHOR_MONDAY_UTC) / MS_PER_DAY);
+    return Math.max(1, Math.floor(diffDays / 7) + 1);
+}
+
+// Obtiene el número de semana actual según el reloj en tiempo real
+export function getCurrentWeekId() {
+    const now = new Date();
+    const todayIso = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    return Math.max(8, getWeekIdFromDate(todayIso));
+}
+
+// Construye los datos exactos (Lunes a Domingo) de cualquier semana N
+export function buildWeekById(weekId, currentWeekId = getCurrentWeekId()) {
+    const startMs = ANCHOR_MONDAY_UTC + (weekId - 1) * 7 * MS_PER_DAY;
+    const endMs = startMs + 6 * MS_PER_DAY;
+    const start = toIsoDateUTC(startMs);
+    const end = toIsoDateUTC(endMs);
+    return {
+        id: weekId,
+        label: weekId === currentWeekId ? `Semana ${weekId} (Actual)` : `Semana ${weekId}`,
+        rangeText: `Lun ${toHumanDateUTC(startMs)} – Dom ${toHumanDateUTC(endMs)}`,
+        start,
+        end,
+        // Semanas 1 a 7 (antes del Lunes 2 de Noviembre) pagadas por defecto; desde Semana 8 falta por pagar
+        defaultPaid: weekId <= 7
+    };
+}
+
+// Genera todas las semanas desde la Semana 1 hasta el cierre de diciembre (y crece sola si hay ventas futuras)
+export function getDynamicWeeksCalendar(sales = []) {
+    const currentWeekId = getCurrentWeekId();
+    const maxSaleWeek = sales.reduce((max, s) => Math.max(max, Number(s.week_id) || 1), 1);
+    // Semana 16 cubre hasta el Domingo 03 de Enero de 2027 (todo Noviembre y Diciembre completos)
+    const totalWeeksToShow = Math.max(currentWeekId + 1, maxSaleWeek, 16);
+
+    return Array.from({ length: totalWeeksToShow }, (_, idx) =>
+        buildWeekById(idx + 1, currentWeekId)
+    );
+}
+
+export const WEEKS_CALENDAR = getDynamicWeeksCalendar();
 
 export const INITIAL_PAID_WEEKS = WEEKS_CALENDAR.reduce((acc, w) => {
     acc[w.id] = w.defaultPaid;
     return acc;
 }, {});
-
-export function getWeekIdFromDate(dateStr) {
-    if (!dateStr) return 8;
-    const found = WEEKS_CALENDAR.find((w) => dateStr >= w.start && dateStr <= w.end);
-    if (found) return found.id;
-    if (dateStr < '2026-09-14') return 1;
-    return 8;
-}
 
 export const INITIAL_EXPENSES = [
     { id: 'exp-1', concept: 'Almacenamiento Google Drive', frequency: 'Trimestral', amount_usd: 2.5, notes: 'Almacenamiento en la nube' },

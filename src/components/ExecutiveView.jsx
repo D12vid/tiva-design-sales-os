@@ -12,7 +12,7 @@ import {
     Clock,
     Calendar
 } from 'lucide-react';
-import { WEEKS_CALENDAR } from '../data/seedData';
+import { getDynamicWeeksCalendar } from '../data/seedData';
 
 export default function ExecutiveView({
     sales,
@@ -26,7 +26,7 @@ export default function ExecutiveView({
     const [periodMode, setPeriodMode] = useState('semanal');
     const [useSheetFormulaMode, setUseSheetFormulaMode] = useState(true);
     const [execSearch, setExecSearch] = useState('');
-    const [execWeekFilter, setExecWeekFilter] = useState('ALL');
+    const weeksList = getDynamicWeeksCalendar(sales);
 
     const grossRevenue = sales.reduce((acc, s) => acc + Number(s.price_usd || 0), 0);
     const totalOrders = sales.length;
