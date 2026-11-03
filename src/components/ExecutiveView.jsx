@@ -27,14 +27,13 @@ export default function ExecutiveView({
     onToggleWeekPaid,
     onDeleteSale
 }) {
-    const [metricMode, setMetricMode] = useState('revenue'); // 'revenue' | 'orders' | 'commission' | 'margin'
+    const [metricMode, setMetricMode] = useState('revenue');
     const [useSheetFormulaMode, setUseSheetFormulaMode] = useState(true);
     const [execSearch, setExecSearch] = useState('');
     const [execWeekFilter, setExecWeekFilter] = useState('ALL');
     const [startDateFilter, setStartDateFilter] = useState('');
     const [endDateFilter, setEndDateFilter] = useState('');
 
-    // Filtrado avanzado por fechas y semanas
     const filteredSales = sales.filter((s) => {
         const matchesText =
             s.client_name.toLowerCase().includes(execSearch.toLowerCase()) ||
@@ -56,14 +55,12 @@ export default function ExecutiveView({
     const netProfit = grossRevenue - fixedExpensesTotal - effectiveCommissionDeducted;
     const netMarginPct = grossRevenue > 0 ? (netProfit / grossRevenue) * 100 : 0;
 
-    // Proyección de cierre de mes (basada en días transcurridos de noviembre 2026)
     const novSalesRevenue = sales
         .filter((s) => s.sale_date.startsWith('2026-11'))
         .reduce((a, b) => a + Number(b.price_usd || 0), 0);
-    const currentDayNov = 2; // Hoy es 2 de noviembre
+    const currentDayNov = 2;
     const projectedMonthRevenue = currentDayNov > 0 ? (novSalesRevenue / currentDayNov) * 30 : novSalesRevenue;
 
-    // Semanas dinámicas
     const weeksList = getDynamicWeeksCalendar(sales);
     const weeklyPayroll = weeksList.map((w) => {
         const wSales = sales.filter((s) => Number(s.week_id) === w.id);
@@ -80,7 +77,6 @@ export default function ExecutiveView({
         .filter((w) => !w.isPaid)
         .reduce((acc, w) => acc + w.totalPay, 0);
 
-    // Desglose por Canal de Adquisición
     const byChannel = sales.reduce((acc, s) => {
         const ch = s.channel || 'Meta Ads';
         acc[ch] = (acc[ch] || 0) + Number(s.price_usd);
@@ -97,7 +93,6 @@ export default function ExecutiveView({
         return acc;
     }, {});
 
-    // Datos para el gráfico dinámico semanal
     const chartSeries = weeklyPayroll.map((w) => {
         let val = w.revenue;
         if (metricMode === 'orders') val = w.orders;
@@ -112,7 +107,6 @@ export default function ExecutiveView({
 
     const maxBar = Math.max(...chartSeries.map((d) => d.value), 1);
 
-    // Exportar CSV
     const exportToCSV = () => {
         const headers = ['ID,Fecha,Semana,Cliente,Producto,Precio USD,Monto Bs,Metodo de Pago,Canal,Comision USD\n'];
         const rows = filteredSales.map(
@@ -129,7 +123,6 @@ export default function ExecutiveView({
         document.body.removeChild(link);
     };
 
-    // Generar reporte WhatsApp
     const shareWhatsAppPayroll = () => {
         const pendingWeeks = weeklyPayroll.filter((w) => !w.isPaid && w.orders > 0);
         let text = `📊 *NÓMINA PENDIENTE TIVA DESIGN*\n`;
@@ -142,7 +135,6 @@ export default function ExecutiveView({
 
     return (
         <div className="space-y-6">
-            {/* Alertas y Botones de Exportación */}
             <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-800 bg-[#12141D] px-4 py-3">
                 <div className="flex flex-wrap items-center gap-3 text-xs text-slate-300">
                     <span>
@@ -180,7 +172,6 @@ export default function ExecutiveView({
                 </div>
             </div>
 
-            {/* Tarjetas KPI Principales + Proyección */}
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
                 <div className="rounded-2xl border border-slate-800 bg-[#12141D] p-5">
                     <div className="flex items-center justify-between text-xs text-slate-400">
@@ -228,7 +219,6 @@ export default function ExecutiveView({
                 </div>
             </div>
 
-            {/* Gráfico Dinámico Avanzado con Selector de Métrica */}
             <div className="rounded-2xl border border-slate-800 bg-[#12141D] p-5">
                 <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                     <div className="flex items-center gap-2">
@@ -281,7 +271,6 @@ export default function ExecutiveView({
                 </div>
             </div>
 
-            {/* Control de Nómina Semanal */}
             <div className="rounded-2xl border border-slate-800 bg-[#12141D] p-5">
                 <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-white">
                     <Calendar className="h-4 w-4 text-violet-400" />
@@ -327,8 +316,8 @@ export default function ExecutiveView({
                                         <button
                                             onClick={() => onToggleWeekPaid(w.id)}
                                             className={`rounded-lg px-2.5 py-1 text-[11px] font-medium transition ${w.isPaid
-                                                    ? 'border border-slate-700 bg-slate-800 text-slate-300 hover:border-amber-500/50 hover:text-amber-300'
-                                                    : 'bg-emerald-600 text-white hover:bg-emerald-500'
+                                                ? 'border border-slate-700 bg-slate-800 text-slate-300 hover:border-amber-500/50 hover:text-amber-300'
+                                                : 'bg-emerald-600 text-white hover:bg-emerald-500'
                                                 }`}
                                         >
                                             {w.isPaid ? 'Marcar Pendiente' : 'Marcar Pagada'}
@@ -341,7 +330,6 @@ export default function ExecutiveView({
                 </div>
             </div>
 
-            {/* Desglose por Canal y Productos */}
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
                 <div className="rounded-2xl border border-slate-800 bg-[#12141D] p-5">
                     <h3 className="mb-3 text-sm font-semibold text-white">Rendimiento por Canal de Adquisición</h3>
@@ -376,11 +364,10 @@ export default function ExecutiveView({
                 </div>
             </div>
 
-            {/* Tabla de Auditoría con Filtros de Fecha Personalizados */}
             <div className="rounded-2xl border border-slate-800 bg-[#12141D] p-5">
                 <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                     <h3 className="text-sm font-semibold text-white">
-                        Auditoría General de Ventas ({filteredExecSales.length} registros filtrados)
+                        Auditoría General de Ventas ({filteredSales.length} registros filtrados)
                     </h3>
                     <div className="flex flex-wrap items-center gap-2">
                         <div className="relative">
@@ -424,7 +411,7 @@ export default function ExecutiveView({
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-800/60">
-                            {filteredExecSales.map((s) => (
+                            {filteredSales.map((s) => (
                                 <tr key={s.id} className="hover:bg-slate-800/25">
                                     <td className="py-2 text-slate-300">{s.sale_date}</td>
                                     <td className="py-2 text-slate-400">S{s.week_id}</td>
