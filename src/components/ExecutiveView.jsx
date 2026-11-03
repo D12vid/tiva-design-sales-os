@@ -19,13 +19,13 @@ import {
 import { getDynamicWeeksCalendar } from '../data/seedData';
 
 export default function ExecutiveView({
-    sales,
-    expenses,
-    funnel,
-    setFunnel,
-    paidWeeks,
-    onToggleWeekPaid,
-    onDeleteSale
+    sales = [],
+    expenses = [],
+    funnel = { visitors: 2450, leads: 480 },
+    setFunnel = () => { },
+    paidWeeks = {},
+    onToggleWeekPaid = () => { },
+    onDeleteSale = () => { }
 }) {
     const [metricMode, setMetricMode] = useState('revenue');
     const [useSheetFormulaMode, setUseSheetFormulaMode] = useState(true);
@@ -36,9 +36,9 @@ export default function ExecutiveView({
 
     const filteredSales = sales.filter((s) => {
         const matchesText =
-            s.client_name.toLowerCase().includes(execSearch.toLowerCase()) ||
-            s.product.toLowerCase().includes(execSearch.toLowerCase()) ||
-            s.payment_method.toLowerCase().includes(execSearch.toLowerCase());
+            (s.client_name || '').toLowerCase().includes(execSearch.toLowerCase()) ||
+            (s.product || '').toLowerCase().includes(execSearch.toLowerCase()) ||
+            (s.payment_method || '').toLowerCase().includes(execSearch.toLowerCase());
         const matchesWeek = execWeekFilter === 'ALL' || Number(s.week_id) === Number(execWeekFilter);
         const matchesStart = !startDateFilter || s.sale_date >= startDateFilter;
         const matchesEnd = !endDateFilter || s.sale_date <= endDateFilter;
@@ -56,7 +56,7 @@ export default function ExecutiveView({
     const netMarginPct = grossRevenue > 0 ? (netProfit / grossRevenue) * 100 : 0;
 
     const novSalesRevenue = sales
-        .filter((s) => s.sale_date.startsWith('2026-11'))
+        .filter((s) => s.sale_date && s.sale_date.startsWith('2026-11'))
         .reduce((a, b) => a + Number(b.price_usd || 0), 0);
     const currentDayNov = 2;
     const projectedMonthRevenue = currentDayNov > 0 ? (novSalesRevenue / currentDayNov) * 30 : novSalesRevenue;
@@ -79,17 +79,19 @@ export default function ExecutiveView({
 
     const byChannel = sales.reduce((acc, s) => {
         const ch = s.channel || 'Meta Ads';
-        acc[ch] = (acc[ch] || 0) + Number(s.price_usd);
+        acc[ch] = (acc[ch] || 0) + Number(s.price_usd || 0);
         return acc;
     }, {});
 
     const byPayment = sales.reduce((acc, s) => {
-        acc[s.payment_method] = (acc[s.payment_method] || 0) + Number(s.price_usd);
+        const pm = s.payment_method || 'Pago Móvil';
+        acc[pm] = (acc[pm] || 0) + Number(s.price_usd || 0);
         return acc;
     }, {});
 
     const byProduct = sales.reduce((acc, s) => {
-        acc[s.product] = (acc[s.product] || 0) + Number(s.price_usd);
+        const pr = s.product || 'Adobe';
+        acc[pr] = (acc[pr] || 0) + Number(s.price_usd || 0);
         return acc;
     }, {});
 
@@ -111,7 +113,7 @@ export default function ExecutiveView({
         const headers = ['ID,Fecha,Semana,Cliente,Producto,Precio USD,Monto Bs,Metodo de Pago,Canal,Comision USD\n'];
         const rows = filteredSales.map(
             (s) =>
-                `"${s.id}","${s.sale_date}",${s.week_id},"${s.client_name}","${s.product}",${s.price_usd},${s.amount_bs},"${s.payment_method}","${s.channel}",${s.commission_usd}`
+                `"${s.id}","${s.sale_date}",${s.week_id},"${s.client_name}","${s.product}",${s.price_usd},${s.amount_bs},"${s.payment_method}","${s.channel || 'Meta Ads'}",${s.commission_usd}`
         );
         const blob = new Blob([...headers, rows.join('\n')], { type: 'text/csv;charset=utf-8;' });
         const url = URL.createObjectURL(blob);
@@ -127,7 +129,7 @@ export default function ExecutiveView({
         const pendingWeeks = weeklyPayroll.filter((w) => !w.isPaid && w.orders > 0);
         let text = `📊 *NÓMINA PENDIENTE TIVA DESIGN*\n`;
         pendingWeeks.forEach((w) => {
-            text += `• Semana ${w.id} (${w.start.slice(5)} al ${w.end.slice(5)}): *${w.orders} ventas* | Total a pagar: *$${w.totalPay.toFixed(2)} USD*\n`;
+            text += `• Semana ${w.id} (${w.start.slice(5)} al {w.end.slice(5)}): *${w.orders} ventas* | Total: *$${w.totalPay.toFixed(2)} USD*\n`;
         });
         text += `\n💰 *Total pendiente por liquidar:* *$${pendingPayoutTotal.toFixed(2)} USD*`;
         window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
