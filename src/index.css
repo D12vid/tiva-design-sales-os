@@ -2,20 +2,39 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+    body {
+        background-color: #030C0A;
+        background-image:
+            radial-gradient(at 0% 0%, rgba(163, 230, 53, 0.22) 0px, transparent 48%),
+            radial-gradient(at 20% 85%, rgba(16, 185, 129, 0.18) 0px, transparent 55%),
+            radial-gradient(at 90% 10%, rgba(4, 47, 46, 0.65) 0px, transparent 60%);
+        background-attachment: fixed;
+        color: #F4F7F5;
+    }
+}
+
+/* Textura granulada inspirada en Rectángulo 5 de Tiva Design */
+.tiva-grain {
+    background-image: radial-gradient(rgba(163, 230, 53, 0.06) 1px, transparent 0);
+    background-size: 24px 24px;
+}
+
 ::-webkit-scrollbar {
     width: 8px;
     height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-    background: #090a0f;
+    background: #030C0A;
 }
 
 ::-webkit-scrollbar-thumb {
-    background: #1f2433;
+    background: #0F2E2A;
     border-radius: 9999px;
+    border: 1px solid rgba(163, 230, 53, 0.25);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: #7c3aed;
+    background: #84CC16;
 }

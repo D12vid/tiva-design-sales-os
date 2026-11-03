@@ -204,7 +204,7 @@ export default function App() {
     const displayedSales = auditCleanMode ? sales.filter((s) => !s.is_template_row) : sales;
 
     return (
-        <div className="min-h-screen bg-[#090A0F] text-slate-100">
+        <div className="tiva-grain min-h-screen text-slate-100">
             <Navbar
                 activeRole={activeRole}
                 onSelectRole={handleSelectRole}

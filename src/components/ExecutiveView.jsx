@@ -240,7 +240,7 @@ export default function ExecutiveView({
         return acc;
     }, {});
 
-    const palette = ['#7C3AED', '#06B6D4', '#10B981', '#F59E0B', '#EC4899'];
+    const palette = ['#A3E635', '#10B981', '#8B5CF6', '#06B6D4', '#F59E0B'];
 
     const buildDonutSegments = (dataObj) => {
         const entries = Object.entries(dataObj).sort((a, b) => b[1] - a[1]);
@@ -441,10 +441,11 @@ export default function ExecutiveView({
                 {chartStyle === 'area' ? (
                     <div className="overflow-x-auto">
                         <svg viewBox={`0 0 ${svgWidth} ${svgHeight}`} className="h-56 w-full min-w-[640px]">
+
                             <defs>
                                 <linearGradient id="tivaAreaGrad" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="0%" stopColor="#7C3AED" stopOpacity="0.45" />
-                                    <stop offset="100%" stopColor="#06B6D4" stopOpacity="0.0" />
+                                    <stop offset="0%" stopColor="#A3E635" stopOpacity="0.45" />
+                                    <stop offset="100%" stopColor="#042F2E" stopOpacity="0.0" />
                                 </linearGradient>
                             </defs>
 
@@ -544,8 +545,8 @@ export default function ExecutiveView({
                                 <div className="h-3 w-full overflow-hidden rounded-full bg-slate-800/90">
                                     <div
                                         className={`h-full rounded-full transition-all duration-500 ${item.isProjected
-                                                ? 'bg-gradient-to-r from-cyan-500 to-emerald-400'
-                                                : 'bg-gradient-to-r from-violet-600 to-cyan-500'
+                                            ? 'bg-gradient-to-r from-cyan-500 to-emerald-400'
+                                            : 'bg-gradient-to-r from-violet-600 to-cyan-500'
                                             }`}
                                         style={{ width: `${Math.min(100, (item.value / maxChartVal) * 100)}%` }}
                                     />
@@ -994,8 +995,8 @@ export default function ExecutiveView({
                                         <button
                                             onClick={() => onToggleWeekPaid(w.id)}
                                             className={`rounded-lg px-2.5 py-1 text-[11px] font-medium transition ${w.isPaid
-                                                    ? 'border border-slate-700 bg-slate-800 text-slate-300 hover:border-amber-500/50 hover:text-amber-300'
-                                                    : 'bg-emerald-600 text-white hover:bg-emerald-500'
+                                                ? 'border border-slate-700 bg-slate-800 text-slate-300 hover:border-amber-500/50 hover:text-amber-300'
+                                                : 'bg-emerald-600 text-white hover:bg-emerald-500'
                                                 }`}
                                         >
                                             {w.isPaid ? 'Marcar Pendiente' : 'Marcar Pagada'}
