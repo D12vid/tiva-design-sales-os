@@ -1,14 +1,14 @@
 import React from 'react';
-import { ShieldCheck, UserCheck, Database, LogOut, Sparkles } from 'lucide-react';
+import { ShieldCheck, UserCheck, Database, Lock, Unlock, Sparkles } from 'lucide-react';
 
 export default function Navbar({
     activeRole,
-    setActiveRole,
+    onSelectRole,
+    isExecutiveUnlocked,
+    onLockExecutive,
     auditCleanMode,
     setAuditCleanMode,
-    isLiveDb,
-    currentUser,
-    onOpenAuth
+    isLiveDb
 }) {
     return (
         <header className="sticky top-0 z-30 border-b border-slate-800/80 bg-[#090A0F]/85 backdrop-blur-xl">
@@ -31,47 +31,55 @@ export default function Navbar({
                 <div className="flex flex-wrap items-center gap-2.5">
                     <div className="flex rounded-xl border border-slate-800 bg-[#12141D] p-1">
                         <button
-                            onClick={() => setActiveRole('vendedor')}
+                            onClick={() => onSelectRole('vendedor')}
                             className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition ${activeRole === 'vendedor'
-                                    ? 'bg-violet-600 text-white shadow-sm'
-                                    : 'text-slate-400 hover:text-slate-200'
+                                ? 'bg-violet-600 text-white shadow-sm'
+                                : 'text-slate-400 hover:text-slate-200'
                                 }`}
                         >
                             <UserCheck className="h-3.5 w-3.5" />
                             Panel Vendedor
                         </button>
                         <button
-                            onClick={() => setActiveRole('ejecutivo')}
+                            onClick={() => onSelectRole('ejecutivo')}
                             className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition ${activeRole === 'ejecutivo'
-                                    ? 'bg-gradient-to-r from-violet-600 to-cyan-600 text-white shadow-sm'
-                                    : 'text-slate-400 hover:text-slate-200'
+                                ? 'bg-gradient-to-r from-violet-600 to-cyan-600 text-white shadow-sm'
+                                : 'text-slate-400 hover:text-slate-200'
                                 }`}
                         >
-                            <ShieldCheck className="h-3.5 w-3.5" />
+                            {isExecutiveUnlocked ? (
+                                <ShieldCheck className="h-3.5 w-3.5 text-emerald-300" />
+                            ) : (
+                                <Lock className="h-3.5 w-3.5 text-amber-400" />
+                            )}
                             Ejecutivo de Ventas
                         </button>
                     </div>
 
-                    <button
-                        onClick={() => setAuditCleanMode(!auditCleanMode)}
-                        title="Alternar entre las 121 filas crudas del Sheet o las 116 ventas depuradas con cliente"
-                        className="rounded-xl border border-slate-800 bg-[#12141D] px-3 py-1.5 text-xs font-medium text-slate-300 hover:border-violet-500/50"
-                    >
-                        {auditCleanMode ? 'Vista Depurada (116 ops)' : 'Hoja Original (121 ops)'}
-                    </button>
+                    {activeRole === 'ejecutivo' && isExecutiveUnlocked && (
+                        <>
+                            <button
+                                onClick={() => setAuditCleanMode(!auditCleanMode)}
+                                className="rounded-xl border border-slate-800 bg-[#12141D] px-3 py-1.5 text-xs font-medium text-slate-300 hover:border-violet-500/50"
+                            >
+                                {auditCleanMode ? 'Vista Depurada (116 ops)' : 'Hoja Original (121 ops)'}
+                            </button>
+
+                            <button
+                                onClick={onLockExecutive}
+                                title="Bloquear panel ejecutivo"
+                                className="flex items-center gap-1.5 rounded-xl border border-rose-500/30 bg-rose-500/10 px-3 py-1.5 text-xs font-medium text-rose-300 hover:bg-rose-500/20"
+                            >
+                                <Unlock className="h-3.5 w-3.5" />
+                                Bloquear
+                            </button>
+                        </>
+                    )}
 
                     <div className="flex items-center gap-1.5 rounded-xl border border-slate-800 bg-[#12141D] px-3 py-1.5 text-xs">
                         <Database className={`h-3.5 w-3.5 ${isLiveDb ? 'text-emerald-400' : 'text-amber-400'}`} />
                         <span className="text-slate-300">{isLiveDb ? 'Supabase Live' : 'Realtime Local'}</span>
                     </div>
-
-                    <button
-                        onClick={onOpenAuth}
-                        className="flex items-center gap-1.5 rounded-xl border border-slate-800 bg-slate-900/90 px-3 py-1.5 text-xs font-medium text-slate-200 hover:border-slate-700"
-                    >
-                        <span>{currentUser?.email || 'Iniciar Sesión'}</span>
-                        <LogOut className="h-3.5 w-3.5 text-slate-400" />
-                    </button>
                 </div>
             </div>
         </header>
