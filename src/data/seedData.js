@@ -9,6 +9,32 @@ export const PRODUCT_CATALOG = [
 export const PAYMENT_METHODS = ['Pago Móvil', 'Binance', 'Zinli', 'Transferencia'];
 export const SALES_CHANNELS = ['Meta Ads', 'Instagram @tivadesign_', 'WhatsApp Directo', 'Web / Marketplace'];
 
+// Calendario oficial de Semanas TIVA DESIGN (Lunes a Domingo)
+export const WEEKS_CALENDAR = [
+    { id: 1, label: 'Semana 1', rangeText: 'Lun 14 Sep – Dom 20 Sep 2026', start: '2026-09-14', end: '2026-09-20', defaultPaid: true },
+    { id: 2, label: 'Semana 2', rangeText: 'Lun 21 Sep – Dom 27 Sep 2026', start: '2026-09-21', end: '2026-09-27', defaultPaid: true },
+    { id: 3, label: 'Semana 3', rangeText: 'Lun 28 Sep – Dom 04 Oct 2026', start: '2026-09-28', end: '2026-10-04', defaultPaid: true },
+    { id: 4, label: 'Semana 4', rangeText: 'Lun 05 Oct – Dom 11 Oct 2026', start: '2026-10-05', end: '2026-10-11', defaultPaid: true },
+    { id: 5, label: 'Semana 5', rangeText: 'Lun 12 Oct – Dom 18 Oct 2026', start: '2026-10-12', end: '2026-10-18', defaultPaid: true },
+    { id: 6, label: 'Semana 6', rangeText: 'Lun 19 Oct – Dom 25 Oct 2026', start: '2026-10-19', end: '2026-10-25', defaultPaid: true },
+    { id: 7, label: 'Semana 7', rangeText: 'Lun 26 Oct – Dom 01 Nov 2026', start: '2026-10-26', end: '2026-11-01', defaultPaid: true },
+    { id: 8, label: 'Semana 8 (Actual)', rangeText: 'Lun 02 Nov – Dom 08 Nov 2026', start: '2026-11-02', end: '2026-11-08', defaultPaid: false },
+    { id: 9, label: 'Semana 9', rangeText: 'Lun 09 Nov – Dom 15 Nov 2026', start: '2026-11-09', end: '2026-11-15', defaultPaid: false }
+];
+
+export const INITIAL_PAID_WEEKS = WEEKS_CALENDAR.reduce((acc, w) => {
+    acc[w.id] = w.defaultPaid;
+    return acc;
+}, {});
+
+export function getWeekIdFromDate(dateStr) {
+    if (!dateStr) return 8;
+    const found = WEEKS_CALENDAR.find((w) => dateStr >= w.start && dateStr <= w.end);
+    if (found) return found.id;
+    if (dateStr < '2026-09-14') return 1;
+    return 8;
+}
+
 export const INITIAL_EXPENSES = [
     { id: 'exp-1', concept: 'Almacenamiento Google Drive', frequency: 'Trimestral', amount_usd: 2.5, notes: 'Almacenamiento en la nube' },
     { id: 'exp-2', concept: 'Publicidad (Ads)', frequency: 'Semanal', amount_usd: 42.0, notes: 'Presupuesto semanal de anuncios' },
@@ -17,7 +43,7 @@ export const INITIAL_EXPENSES = [
 ];
 
 const RAW_SALES_COMPACT = [
-    // Semana 1 (14 a 20 Sep) - 31 ventas ($204 USD)
+    // Semana 1 (Lun 14 Sep a Dom 20 Sep 2026) - 31 ventas ($204 USD)
     [1, '2026-09-14', 'Santiago Pietri Hidalgo', 'Adobe', 6, 5800, 'Pago Móvil', 'Meta Ads', false],
     [1, '2026-09-14', 'Johanna Betancour', 'Adobe', 6, 5800, 'Pago Móvil', 'Meta Ads', false],
     [1, '2026-09-14', 'Edgar David Colmenares', 'Adobe', 6, 5800, 'Pago Móvil', 'Instagram @tivadesign_', false],
@@ -50,7 +76,7 @@ const RAW_SALES_COMPACT = [
     [1, '2026-09-20', 'Yonehiker Rivera', 'Adobe', 6, 5800, 'Pago Móvil', 'Meta Ads', false],
     [1, '2026-09-20', 'Cristian Mendes', 'Adobe', 6, 5800, 'Binance', 'Meta Ads', false],
 
-    // Semana 2 (21 a 27 Sep) - 21 ventas ($135 USD)
+    // Semana 2 (Lun 21 Sep a Dom 27 Sep 2026) - 21 ventas ($135 USD)
     [2, '2026-09-21', 'Fandy Paiva', 'Adobe', 6, 5800, 'Pago Móvil', 'Meta Ads', false],
     [2, '2026-09-21', 'Freddy García', 'Adobe', 6, 5800, 'Pago Móvil', 'Meta Ads', false],
     [2, '2026-09-21', 'Cliente Sin Nombre', 'Adobe', 6, 5800, 'Pago Móvil', 'WhatsApp Directo', false],
@@ -73,7 +99,7 @@ const RAW_SALES_COMPACT = [
     [2, '2026-09-27', 'Katy trujillo', 'Adobe', 6, 5800, 'Pago Móvil', 'Instagram @tivadesign_', false],
     [2, '2026-09-27', 'moka', 'Adobe', 6, 5800, 'Pago Móvil', 'Meta Ads', false],
 
-    // Semana 3 (28 Sep a 04 Oct) - 24 reales + 4 filas prellenadas ($168 bruto / $144 real)
+    // Semana 3 (Lun 28 Sep a Dom 04 Oct 2026) - 24 reales + 4 plantilla
     [3, '2026-09-28', 'Patiño González', 'Adobe', 6, 5800, 'Pago Móvil', 'Meta Ads', false],
     [3, '2026-09-29', 'Gabriela José', 'Adobe', 6, 5800, 'Pago Móvil', 'Meta Ads', false],
     [3, '2026-09-29', 'Isabella Valentina', 'Adobe', 6, 5800, 'Pago Móvil', 'Instagram @tivadesign_', false],
@@ -103,7 +129,7 @@ const RAW_SALES_COMPACT = [
     [3, '2026-10-04', '[Fila Plantilla Sheet #111]', 'Adobe', 6, 5850, 'Pago Móvil', 'Meta Ads', true],
     [3, '2026-10-04', '[Fila Plantilla Sheet #112]', 'Adobe', 6, 5850, 'Pago Móvil', 'Meta Ads', true],
 
-    // Semana 4 (05 a 11 Oct) - 17 reales + 1 fila prellenada
+    // Semana 4 (Lun 05 Oct a Dom 11 Oct 2026) - 17 reales + 1 plantilla
     [4, '2026-10-05', 'Estudio Visual', 'Adobe', 6, 5850, 'Pago Móvil', 'Instagram @tivadesign_', false],
     [4, '2026-10-05', 'Valeria Morillor', 'Adobe', 6, 5850, 'Pago Móvil', 'Meta Ads', false],
     [4, '2026-10-05', 'Nathalia Sarcos', 'Adobe', 6, 5850, 'Pago Móvil', 'Meta Ads', false],
@@ -123,7 +149,7 @@ const RAW_SALES_COMPACT = [
     [4, '2026-10-11', 'Nolberto Rubio', 'Adobe', 6, 5850, 'Pago Móvil', 'Meta Ads', false],
     [4, '2026-10-11', '[Fila Plantilla Sheet #50]', 'Adobe', 6, 5850, 'Pago Móvil', 'Meta Ads', true],
 
-    // Semana 5 (12 a 18 Oct) - 13 ventas
+    // Semana 5 (Lun 12 Oct a Dom 18 Oct 2026) - 13 ventas
     [5, '2026-10-12', 'Yennifer Milano', 'Adobe', 6, 6000, 'Pago Móvil', 'Meta Ads', false],
     [5, '2026-10-12', 'Paola González', 'Adobe', 6, 6000, 'Pago Móvil', 'Instagram @tivadesign_', false],
     [5, '2026-10-12', 'Lithografica', 'Adobe', 6, 6000, 'Pago Móvil', 'Meta Ads', false],
@@ -138,17 +164,17 @@ const RAW_SALES_COMPACT = [
     [5, '2026-10-17', 'Paola valentina', 'Adobe', 6, 6000, 'Pago Móvil', 'Meta Ads', false],
     [5, '2026-10-18', 'Alexia Valentina', 'Adobe', 6, 6000, 'Pago Móvil', 'Instagram @tivadesign_', false],
 
-    // Semana 6 (19 a 24 Nov) - 10 ventas
-    [6, '2026-11-19', 'Anders Morales', 'Adobe', 6, 6000, 'Zinli', 'Web / Marketplace', false],
-    [6, '2026-11-19', 'Jscreativo', 'Adobe', 6, 6000, 'Pago Móvil', 'Instagram @tivadesign_', false],
-    [6, '2026-11-20', 'Jesús Barillas', 'Adobe', 6, 6000, 'Pago Móvil', 'Meta Ads', false],
-    [6, '2026-11-20', 'Luis Bosque', 'Adobe', 6, 6000, 'Pago Móvil', 'Meta Ads', false],
-    [6, '2026-11-20', 'Cliente Sin Nombre', 'Adobe', 6, 6000, 'Pago Móvil', 'WhatsApp Directo', false],
-    [6, '2026-11-20', 'Jesús Barillas', 'Adobe', 6, 6000, 'Pago Móvil', 'Meta Ads', false],
-    [6, '2026-11-21', 'Alex marker', 'Adobe', 6, 6000, 'Pago Móvil', 'Instagram @tivadesign_', false],
-    [6, '2026-11-22', 'Agustin', 'Adobe', 6, 6000, 'Binance', 'Meta Ads', false],
-    [6, '2026-11-24', 'Sebastián Alejandro', 'Adobe', 6, 6000, 'Pago Móvil', 'Meta Ads', false],
-    [6, '2026-11-24', 'Lea Domínguez', 'Adobe', 6, 6000, 'Binance', 'Instagram @tivadesign_', false]
+    // Semana 6 (Lun 19 Oct a Dom 25 Oct 2026) - 10 ventas (Fechas corregidas a Octubre)
+    [6, '2026-10-19', 'Anders Morales', 'Adobe', 6, 6000, 'Zinli', 'Web / Marketplace', false],
+    [6, '2026-10-19', 'Jscreativo', 'Adobe', 6, 6000, 'Pago Móvil', 'Instagram @tivadesign_', false],
+    [6, '2026-10-20', 'Jesús Barillas', 'Adobe', 6, 6000, 'Pago Móvil', 'Meta Ads', false],
+    [6, '2026-10-20', 'Luis Bosque', 'Adobe', 6, 6000, 'Pago Móvil', 'Meta Ads', false],
+    [6, '2026-10-20', 'Cliente Sin Nombre', 'Adobe', 6, 6000, 'Pago Móvil', 'WhatsApp Directo', false],
+    [6, '2026-10-20', 'Jesús Barillas', 'Adobe', 6, 6000, 'Pago Móvil', 'Meta Ads', false],
+    [6, '2026-10-21', 'Alex marker', 'Adobe', 6, 6000, 'Pago Móvil', 'Instagram @tivadesign_', false],
+    [6, '2026-10-22', 'Agustin', 'Adobe', 6, 6000, 'Binance', 'Meta Ads', false],
+    [6, '2026-10-24', 'Sebastián Alejandro', 'Adobe', 6, 6000, 'Pago Móvil', 'Meta Ads', false],
+    [6, '2026-10-24', 'Lea Domínguez', 'Adobe', 6, 6000, 'Binance', 'Instagram @tivadesign_', false]
 ];
 
 export const INITIAL_SALES = RAW_SALES_COMPACT.map((row, index) => ({

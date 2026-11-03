@@ -3,13 +3,12 @@ import { Lock, X, ShieldAlert } from 'lucide-react';
 import Navbar from './components/Navbar';
 import SellerView from './components/SellerView';
 import ExecutiveView from './components/ExecutiveView';
-import { INITIAL_SALES, INITIAL_EXPENSES } from './data/seedData';
+import { INITIAL_SALES, INITIAL_EXPENSES, INITIAL_PAID_WEEKS } from './data/seedData';
 import { supabase, isSupabaseConfigured } from './lib/supabaseClient';
 
 const ADMIN_PIN = import.meta.env.VITE_ADMIN_PIN || '2026';
 
 export default function App() {
-    // Inicia por defecto en 'vendedor' para que el trabajador solo vea su panel al entrar
     const [activeRole, setActiveRole] = useState('vendedor');
     const [isExecutiveUnlocked, setIsExecutiveUnlocked] = useState(() => {
         return sessionStorage.getItem('tiva_exec_unlocked') === 'true';
@@ -20,30 +19,50 @@ export default function App() {
 
     const [auditCleanMode, setAuditCleanMode] = useState(false);
     const [sales, setSales] = useState(() => {
-        const saved = localStorage.getItem('tiva_sales_v1');
+        const saved = localStorage.getItem('tiva_sales_v2');
         return saved ? JSON.parse(saved) : INITIAL_SALES;
     });
+    const [paidWeeks, setPaidWeeks] = useState(() => {
+        const saved = localStorage.getItem('tiva_paid_weeks_v2');
+        return saved ? JSON.parse(saved) : INITIAL_PAID_WEEKS;
+    });
+
     const [expenses] = useState(INITIAL_EXPENSES);
     const [funnel, setFunnel] = useState({ visitors: 2450, leads: 480, exchange_rate: 60 });
 
     useEffect(() => {
-        localStorage.setItem('tiva_sales_v1', JSON.stringify(sales));
+        localStorage.setItem('tiva_sales_v2', JSON.stringify(sales));
     }, [sales]);
+
+    useEffect(() => {
+        localStorage.setItem('tiva_paid_weeks_v2', JSON.stringify(paidWeeks));
+    }, [paidWeeks]);
 
     useEffect(() => {
         if (!isSupabaseConfigured || !supabase) return;
 
         const fetchInitial = async () => {
-            const { data } = await supabase.from('sales').select('*').order('sale_date', { ascending: false });
-            if (data && data.length > 0) setSales(data);
+            const { data: salesData } = await supabase
+                .from('sales')
+                .select('*')
+                .order('sale_date', { ascending: false });
+            if (salesData && salesData.length > 0) setSales(salesData);
+
+            const { data: payoutsData } = await supabase.from('weekly_payouts').select('*');
+            if (payoutsData && payoutsData.length > 0) {
+                const mapped = { ...INITIAL_PAID_WEEKS };
+                payoutsData.forEach((row) => {
+                    mapped[row.week_id] = row.is_paid;
+                });
+                setPaidWeeks(mapped);
+            }
         };
         fetchInitial();
 
         const channel = supabase
-            .channel('realtime:sales')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'sales' }, () => {
-                fetchInitial();
-            })
+            .channel('realtime:tiva_os')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'sales' }, fetchInitial)
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'weekly_payouts' }, fetchInitial)
             .subscribe();
 
         return () => {
@@ -83,6 +102,19 @@ export default function App() {
         setIsExecutiveUnlocked(false);
         sessionStorage.removeItem('tiva_exec_unlocked');
         setActiveRole('vendedor');
+    };
+
+    const handleToggleWeekPaid = async (weekId) => {
+        const nextState = !paidWeeks[weekId];
+        setPaidWeeks((prev) => ({ ...prev, [weekId]: nextState }));
+        if (isSupabaseConfigured && supabase) {
+            await supabase.from('weekly_payouts').upsert({
+                week_id: weekId,
+                is_paid: nextState,
+                paid_at: nextState ? new Date().toISOString() : null,
+                updated_at: new Date().toISOString()
+            });
+        }
     };
 
     const handleAddSale = async (newSale) => {
@@ -128,13 +160,18 @@ export default function App() {
                         expenses={expenses}
                         funnel={funnel}
                         setFunnel={setFunnel}
+                        paidWeeks={paidWeeks}
+                        onToggleWeekPaid={handleToggleWeekPaid}
+                        onDeleteSale={handleDeleteSale}
                     />
                 ) : (
                     <SellerView
                         sales={displayedSales}
+                        paidWeeks={paidWeeks}
                         onAddSale={handleAddSale}
                         onUpdateSale={handleUpdateSale}
                         onDeleteSale={handleDeleteSale}
+                        canDelete={isExecutiveUnlocked}
                     />
                 )}
             </main>
