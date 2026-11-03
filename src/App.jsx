@@ -22,17 +22,24 @@ export default function App() {
         const saved = localStorage.getItem('tiva_sales_v2');
         return saved ? JSON.parse(saved) : INITIAL_SALES;
     });
+    const [expenses, setExpenses] = useState(() => {
+        const saved = localStorage.getItem('tiva_expenses_v2');
+        return saved ? JSON.parse(saved) : INITIAL_EXPENSES;
+    });
     const [paidWeeks, setPaidWeeks] = useState(() => {
         const saved = localStorage.getItem('tiva_paid_weeks_v2');
         return saved ? JSON.parse(saved) : INITIAL_PAID_WEEKS;
     });
 
-    const [expenses] = useState(INITIAL_EXPENSES);
     const [funnel, setFunnel] = useState({ visitors: 2450, leads: 480, exchange_rate: 60 });
 
     useEffect(() => {
         localStorage.setItem('tiva_sales_v2', JSON.stringify(sales));
     }, [sales]);
+
+    useEffect(() => {
+        localStorage.setItem('tiva_expenses_v2', JSON.stringify(expenses));
+    }, [expenses]);
 
     useEffect(() => {
         localStorage.setItem('tiva_paid_weeks_v2', JSON.stringify(paidWeeks));
@@ -41,12 +48,18 @@ export default function App() {
     useEffect(() => {
         if (!isSupabaseConfigured || !supabase) return;
 
-        const fetchInitial = async () => {
+        const fetchAllData = async () => {
             const { data: salesData } = await supabase
                 .from('sales')
                 .select('*')
                 .order('sale_date', { ascending: false });
             if (salesData && salesData.length > 0) setSales(salesData);
+
+            const { data: expensesData } = await supabase
+                .from('expenses')
+                .select('*')
+                .order('created_at', { ascending: true });
+            if (expensesData && expensesData.length > 0) setExpenses(expensesData);
 
             const { data: payoutsData } = await supabase.from('weekly_payouts').select('*');
             if (payoutsData && payoutsData.length > 0) {
@@ -57,12 +70,13 @@ export default function App() {
                 setPaidWeeks(mapped);
             }
         };
-        fetchInitial();
+        fetchAllData();
 
         const channel = supabase
             .channel('realtime:tiva_os')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'sales' }, fetchInitial)
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'weekly_payouts' }, fetchInitial)
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'sales' }, fetchAllData)
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'expenses' }, fetchAllData)
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'weekly_payouts' }, fetchAllData)
             .subscribe();
 
         return () => {
@@ -117,6 +131,7 @@ export default function App() {
         }
     };
 
+    // CRUD Ventas
     const handleAddSale = async (newSale) => {
         const created = { ...newSale, id: `sale-${Date.now()}` };
         setSales((prev) => [created, ...prev]);
@@ -128,7 +143,8 @@ export default function App() {
     const handleUpdateSale = async (updated) => {
         setSales((prev) => prev.map((item) => (item.id === updated.id ? updated : item)));
         if (isSupabaseConfigured && supabase) {
-            await supabase.from('sales').update(updated).eq('id', updated.id);
+            const { id, created_at, ...payload } = updated;
+            await supabase.from('sales').update(payload).eq('id', id);
         }
     };
 
@@ -136,6 +152,52 @@ export default function App() {
         setSales((prev) => prev.filter((item) => item.id !== id));
         if (isSupabaseConfigured && supabase) {
             await supabase.from('sales').delete().eq('id', id);
+        }
+    };
+
+    // CRUD Gastos Operativos Fijos en Vivo
+    const handleAddExpense = async (newExpense) => {
+        const tempId = `exp-${Date.now()}`;
+        const optimistic = { ...newExpense, id: tempId };
+        setExpenses((prev) => [...prev, optimistic]);
+
+        if (isSupabaseConfigured && supabase) {
+            const { data } = await supabase
+                .from('expenses')
+                .insert([
+                    {
+                        concept: newExpense.concept,
+                        frequency: newExpense.frequency,
+                        amount_usd: Number(newExpense.amount_usd),
+                        notes: newExpense.notes || ''
+                    }
+                ])
+                .select();
+            if (data && data[0]) {
+                setExpenses((prev) => prev.map((e) => (e.id === tempId ? data[0] : e)));
+            }
+        }
+    };
+
+    const handleUpdateExpense = async (updatedExp) => {
+        setExpenses((prev) => prev.map((e) => (e.id === updatedExp.id ? updatedExp : e)));
+        if (isSupabaseConfigured && supabase) {
+            await supabase
+                .from('expenses')
+                .update({
+                    concept: updatedExp.concept,
+                    frequency: updatedExp.frequency,
+                    amount_usd: Number(updatedExp.amount_usd),
+                    notes: updatedExp.notes || ''
+                })
+                .eq('id', updatedExp.id);
+        }
+    };
+
+    const handleDeleteExpense = async (id) => {
+        setExpenses((prev) => prev.filter((e) => e.id !== id));
+        if (isSupabaseConfigured && supabase) {
+            await supabase.from('expenses').delete().eq('id', id);
         }
     };
 
@@ -163,6 +225,9 @@ export default function App() {
                         paidWeeks={paidWeeks}
                         onToggleWeekPaid={handleToggleWeekPaid}
                         onDeleteSale={handleDeleteSale}
+                        onAddExpense={handleAddExpense}
+                        onUpdateExpense={handleUpdateExpense}
+                        onDeleteExpense={handleDeleteExpense}
                     />
                 ) : (
                     <SellerView

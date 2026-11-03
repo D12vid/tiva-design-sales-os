@@ -16,7 +16,12 @@ import {
     Sliders,
     PieChart,
     ArrowUpRight,
-    ArrowDownRight
+    ArrowDownRight,
+    PlusCircle,
+    Edit3,
+    Save,
+    X,
+    Receipt
 } from 'lucide-react';
 import { getDynamicWeeksCalendar } from '../data/seedData';
 
@@ -27,22 +32,35 @@ export default function ExecutiveView({
     setFunnel = () => { },
     paidWeeks = {},
     onToggleWeekPaid = () => { },
-    onDeleteSale = () => { }
+    onDeleteSale = () => { },
+    onAddExpense = () => { },
+    onUpdateExpense = () => { },
+    onDeleteExpense = () => { }
 }) {
-    const [metricMode, setMetricMode] = useState('revenue'); // 'revenue' | 'orders' | 'commission' | 'margin'
-    const [chartStyle, setChartStyle] = useState('area'); // 'area' | 'bars'
+    const [metricMode, setMetricMode] = useState('revenue');
+    const [chartStyle, setChartStyle] = useState('area');
     const [useSheetFormulaMode, setUseSheetFormulaMode] = useState(true);
     const [execSearch, setExecSearch] = useState('');
     const [execWeekFilter, setExecWeekFilter] = useState('ALL');
     const [startDateFilter, setStartDateFilter] = useState('');
     const [endDateFilter, setEndDateFilter] = useState('');
 
-    // Controles del Simulador Dinámico de Proyecciones (What-If)
-    const [simVolumePct, setSimVolumePct] = useState(0); // -50% a +100% sobre media histórica
-    const [simTicketPct, setSimTicketPct] = useState(0); // -20% a +50% sobre ticket promedio
-    const [simWeeklyAds, setSimWeeklyAds] = useState(42); // Presupuesto semanal Ads ($42 base)
+    // Estado del Formulario de Nuevo Gasto Fijo
+    const [expForm, setExpForm] = useState({
+        concept: '',
+        frequency: 'Semanal',
+        amount_usd: '',
+        notes: ''
+    });
+    const [expError, setExpError] = useState('');
+    const [editingExpId, setEditingExpId] = useState(null);
+    const [editingExpDraft, setEditingExpDraft] = useState({});
 
-    // Filtrado de ventas
+    // Controles del Simulador Dinámico de Proyecciones (What-If)
+    const [simVolumePct, setSimVolumePct] = useState(0);
+    const [simTicketPct, setSimTicketPct] = useState(0);
+    const [simWeeklyAds, setSimWeeklyAds] = useState(42);
+
     const filteredSales = sales.filter((s) => {
         const matchesText =
             (s.client_name || '').toLowerCase().includes(execSearch.toLowerCase()) ||
@@ -64,7 +82,6 @@ export default function ExecutiveView({
     const netProfit = grossRevenue - fixedExpensesTotal - effectiveCommissionDeducted;
     const netMarginPct = grossRevenue > 0 ? (netProfit / grossRevenue) * 100 : 0;
 
-    // Construcción de nómina y rendimiento por semana calendario
     const weeksList = getDynamicWeeksCalendar(sales);
     const weeklyPayroll = weeksList.map((w, idx) => {
         const wSales = sales.filter((s) => Number(s.week_id) === w.id);
@@ -77,7 +94,6 @@ export default function ExecutiveView({
         return { ...w, orders, revenue, commission, bonus, totalPay, isPaid, index: idx };
     });
 
-    // Cálculo de crecimiento semana a semana (WoW) en semanas con actividad
     const activeHistoricalWeeks = weeklyPayroll.filter((w) => w.orders > 0);
     const avgWeeklyRev =
         activeHistoricalWeeks.length > 0
@@ -88,7 +104,6 @@ export default function ExecutiveView({
             ? activeHistoricalWeeks.reduce((a, b) => a + b.orders, 0) / activeHistoricalWeeks.length
             : 20.17;
 
-    // Motor de Proyección Dinámica para las próximas 4 semanas (Noviembre S8 a S11)
     const simWeeklyOrders = Math.max(1, Math.round(avgWeeklyOrders * (1 + simVolumePct / 100)));
     const simWeeklyRevenue = avgWeeklyRev * (1 + simVolumePct / 100) * (1 + simTicketPct / 100);
     const simWeeklyCommission = simWeeklyRevenue * 0.15;
@@ -104,7 +119,49 @@ export default function ExecutiveView({
         .filter((w) => !w.isPaid)
         .reduce((acc, w) => acc + w.totalPay, 0);
 
-    // Serie combinada (Semanas 1-6 Históricas + Semanas 8-11 Proyectadas) para el gráfico principal
+    // Handlers de Gastos Operativos Fijos
+    const handleCreateExpense = (e) => {
+        e.preventDefault();
+        if (!expForm.concept.trim()) {
+            setExpError('Ingresa el nombre o concepto del gasto.');
+            return;
+        }
+        if (expForm.amount_usd === '' || Number(expForm.amount_usd) < 0) {
+            setExpError('Ingresa un monto en USD válido.');
+            return;
+        }
+        setExpError('');
+        onAddExpense({
+            concept: expForm.concept.trim(),
+            frequency: expForm.frequency,
+            amount_usd: Number(expForm.amount_usd),
+            notes: expForm.notes.trim()
+        });
+        setExpForm({ concept: '', frequency: 'Semanal', amount_usd: '', notes: '' });
+    };
+
+    const startEditExpense = (exp) => {
+        setEditingExpId(exp.id);
+        setEditingExpDraft({ ...exp });
+    };
+
+    const saveEditExpense = () => {
+        if (!editingExpDraft.concept?.trim() || Number(editingExpDraft.amount_usd) < 0) return;
+        onUpdateExpense({
+            ...editingExpDraft,
+            concept: editingExpDraft.concept.trim(),
+            amount_usd: Number(editingExpDraft.amount_usd)
+        });
+        setEditingExpId(null);
+    };
+
+    const confirmDeleteExpense = (exp) => {
+        if (window.confirm(`¿Eliminar el gasto fijo "${exp.concept}" ($${Number(exp.amount_usd).toFixed(2)} USD)?`)) {
+            onDeleteExpense(exp.id);
+        }
+    };
+
+    // Nodos del gráfico combinado
     const historicalChartNodes = weeklyPayroll.slice(0, 6).map((w, i, arr) => {
         const prevRev = i > 0 ? arr[i - 1].revenue : w.revenue;
         const wowPct = i > 0 && prevRev > 0 ? ((w.revenue - prevRev) / prevRev) * 100 : 0;
@@ -129,7 +186,7 @@ export default function ExecutiveView({
     });
 
     const projectedChartNodes = [8, 9, 10, 11].map((wNum, idx) => {
-        const factor = 1 + idx * 0.03; // Ligera rampa orgánica semanal
+        const factor = 1 + idx * 0.03;
         let val = simWeeklyRevenue * factor;
         if (metricMode === 'orders') val = Math.round(simWeeklyOrders * factor);
         if (metricMode === 'commission') val = simWeeklyPayroll * factor;
@@ -154,7 +211,6 @@ export default function ExecutiveView({
     const combinedChartData = [...historicalChartNodes, ...projectedChartNodes];
     const maxChartVal = Math.max(...combinedChartData.map((d) => d.value), 1);
 
-    // Coordenadas para el gráfico SVG de área/curva
     const svgWidth = 800;
     const svgHeight = 210;
     const padX = 42;
@@ -172,7 +228,6 @@ export default function ExecutiveView({
     const areaPoints = `${svgPoints[0]?.x || padX},${padY + plotH} ${polylinePoints} ${svgPoints[svgPoints.length - 1]?.x || svgWidth - padX
         },${padY + plotH}`;
 
-    // Agrupaciones para gráficos Donut SVG
     const byProduct = filteredSales.reduce((acc, s) => {
         const pr = s.product || 'Adobe';
         acc[pr] = (acc[pr] || 0) + Number(s.price_usd || 0);
@@ -182,12 +237,6 @@ export default function ExecutiveView({
     const byPayment = filteredSales.reduce((acc, s) => {
         const pm = s.payment_method || 'Pago Móvil';
         acc[pm] = (acc[pm] || 0) + Number(s.price_usd || 0);
-        return acc;
-    }, {});
-
-    const byChannel = filteredSales.reduce((acc, s) => {
-        const ch = s.channel || 'Meta Ads';
-        acc[ch] = (acc[ch] || 0) + Number(s.price_usd || 0);
         return acc;
     }, {});
 
@@ -236,7 +285,8 @@ export default function ExecutiveView({
         const pendingWeeks = weeklyPayroll.filter((w) => !w.isPaid && w.orders > 0);
         let text = `📊 *REPORTE EJECUTIVO & NÓMINA — TIVA DESIGN*\n`;
         text += `• Facturación Acumulada: *$${grossRevenue.toFixed(2)} USD* (${totalOrders} ventas)\n`;
-        text += `• Proyección Mensual (4 sem): *$${projected4WeeksRevenue.toFixed(2)} USD*\n\n`;
+        text += `• Gastos Operativos Fijos: *$${fixedExpensesTotal.toFixed(2)} USD*\n`;
+        text += `• Ganancia Neta: *$${netProfit.toFixed(2)} USD* (${netMarginPct.toFixed(1)}%)\n\n`;
         if (pendingWeeks.length > 0) {
             pendingWeeks.forEach((w) => {
                 text += `• Semana ${w.id} (${w.start.slice(5)} al ${w.end.slice(5)}): *${w.orders} ventas* → Pagar: *$${w.totalPay.toFixed(2)} USD*\n`;
@@ -255,7 +305,7 @@ export default function ExecutiveView({
                     <span>
                         Conciliación:{' '}
                         <strong className="text-violet-300">
-                            {useSheetFormulaMode ? 'Fórmula Hoja DASHBOARD ($607.85)' : 'Deducción Real ($581.75)'}
+                            {useSheetFormulaMode ? 'Fórmula Hoja DASHBOARD' : 'Deducción Total de Comisiones'}
                         </strong>
                     </span>
                     <span className="rounded-md border border-amber-500/30 bg-amber-500/10 px-2.5 py-0.5 font-medium text-amber-300">
@@ -287,7 +337,7 @@ export default function ExecutiveView({
                 </div>
             </div>
 
-            {/* 5 Tarjetas KPI con Indicadores de Ritmo Semanal */}
+            {/* 5 Tarjetas KPI */}
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
                 <div className="rounded-2xl border border-slate-800 bg-[#12141D] p-5">
                     <div className="flex items-center justify-between text-xs text-slate-400">
@@ -322,7 +372,7 @@ export default function ExecutiveView({
                         <Percent className="h-4 w-4 text-amber-400" />
                     </div>
                     <p className="mt-2 text-2xl font-bold text-white">{netMarginPct.toFixed(1)}%</p>
-                    <p className="mt-1 text-xs text-slate-400">Gastos fijos: ${fixedExpensesTotal.toFixed(2)} USD</p>
+                    <p className="mt-1 text-xs text-rose-400">Gastos fijos: ${fixedExpensesTotal.toFixed(2)} USD</p>
                 </div>
 
                 <div className="rounded-2xl border border-violet-500/40 bg-gradient-to-br from-violet-600/15 to-cyan-500/10 p-5 sm:col-span-2 lg:col-span-1">
@@ -346,7 +396,7 @@ export default function ExecutiveView({
                             Curva de Evolución Histórica (S1–S6) + Proyección Dinámica (S8–S11)
                         </h3>
                         <p className="text-xs text-slate-400">
-                            Las barras/puntos violetas muestran tus cierres reales; el tramo cian muestra la proyección interactiva de noviembre
+                            Cierres reales en violeta y proyección interactiva de noviembre en cian
                         </p>
                     </div>
 
@@ -506,9 +556,8 @@ export default function ExecutiveView({
                 )}
             </div>
 
-            {/* Simulador Interactivo de Proyecciones (What-If) + Anillos de Distribución */}
+            {/* Simulador Interactivo de Proyecciones + Anillos de Distribución */}
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-                {/* Simulador de Escenarios */}
                 <div className="rounded-2xl border border-violet-500/30 bg-[#12141D] p-5 lg:col-span-2">
                     <div className="mb-4 flex items-center justify-between">
                         <div>
@@ -623,7 +672,7 @@ export default function ExecutiveView({
                     </div>
                 </div>
 
-                {/* Gráficos Donut SVG de Productos y Pagos */}
+                {/* Gráficos Donut SVG */}
                 <div className="rounded-2xl border border-slate-800 bg-[#12141D] p-5">
                     <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold text-white">
                         <PieChart className="h-4 w-4 text-violet-400" />
@@ -689,6 +738,213 @@ export default function ExecutiveView({
                             ))}
                         </div>
                     </div>
+                </div>
+            </div>
+
+            {/* NUEVO MÓDULO: Gestor Editable de Gastos Operativos Fijos en Vivo (Supabase) */}
+            <div className="rounded-2xl border border-slate-800 bg-[#12141D] p-5">
+                <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+                    <div>
+                        <h3 className="flex items-center gap-2 text-sm font-semibold text-white">
+                            <Receipt className="h-4 w-4 text-rose-400" />
+                            Gestor de Gastos Operativos Fijos en Vivo (Total: ${fixedExpensesTotal.toFixed(2)} USD)
+                        </h3>
+                        <p className="text-xs text-slate-400">
+                            Añade, edita o elimina costos operativos en tiempo real dentro de Supabase; el P&L y el margen neto se recalculan al instante
+                        </p>
+                    </div>
+                </div>
+
+                {expError && (
+                    <div className="mb-4 rounded-xl border border-rose-500/40 bg-rose-500/10 px-3 py-2 text-xs text-rose-300">
+                        {expError}
+                    </div>
+                )}
+
+                {/* Formulario para Añadir Nuevo Gasto Fijo */}
+                <form
+                    onSubmit={handleCreateExpense}
+                    className="mb-5 grid grid-cols-1 gap-3 rounded-xl border border-slate-800/90 bg-[#090A0F] p-3.5 sm:grid-cols-2 lg:grid-cols-5"
+                >
+                    <div>
+                        <label className="mb-1 block text-[11px] text-slate-400">Concepto del Gasto</label>
+                        <input
+                            type="text"
+                            placeholder="Ej. Publicidad Meta Ads"
+                            value={expForm.concept}
+                            onChange={(e) => setExpForm({ ...expForm, concept: e.target.value })}
+                            className="w-full rounded-lg border border-slate-800 bg-[#12141D] px-3 py-1.5 text-xs text-white focus:border-violet-500 focus:outline-none"
+                            required
+                        />
+                    </div>
+
+                    <div>
+                        <label className="mb-1 block text-[11px] text-slate-400">Frecuencia</label>
+                        <select
+                            value={expForm.frequency}
+                            onChange={(e) => setExpForm({ ...expForm, frequency: e.target.value })}
+                            className="w-full rounded-lg border border-slate-800 bg-[#12141D] px-3 py-1.5 text-xs text-white focus:border-violet-500 focus:outline-none"
+                        >
+                            <option value="Semanal">Semanal</option>
+                            <option value="Mensual">Mensual</option>
+                            <option value="Trimestral">Trimestral</option>
+                            <option value="Anual">Anual</option>
+                            <option value="Único">Pago Único</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label className="mb-1 block text-[11px] text-slate-400">Monto (USD)</label>
+                        <input
+                            type="number"
+                            step="0.01"
+                            placeholder="Ej. 42.00"
+                            value={expForm.amount_usd}
+                            onChange={(e) => setExpForm({ ...expForm, amount_usd: e.target.value })}
+                            className="w-full rounded-lg border border-slate-800 bg-[#12141D] px-3 py-1.5 text-xs text-white focus:border-violet-500 focus:outline-none"
+                            required
+                        />
+                    </div>
+
+                    <div>
+                        <label className="mb-1 block text-[11px] text-slate-400">Detalle / Observaciones</label>
+                        <input
+                            type="text"
+                            placeholder="Ej. Campaña semanal Instagram"
+                            value={expForm.notes}
+                            onChange={(e) => setExpForm({ ...expForm, notes: e.target.value })}
+                            className="w-full rounded-lg border border-slate-800 bg-[#12141D] px-3 py-1.5 text-xs text-white focus:border-violet-500 focus:outline-none"
+                        />
+                    </div>
+
+                    <div className="flex items-end">
+                        <button
+                            type="submit"
+                            className="flex w-full items-center justify-center gap-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-cyan-600 px-3 py-2 text-xs font-semibold text-white shadow-md hover:opacity-95"
+                        >
+                            <PlusCircle className="h-3.5 w-3.5" />
+                            Añadir Gasto Fijo
+                        </button>
+                    </div>
+                </form>
+
+                {/* Tabla Editable de Gastos Fijos */}
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs">
+                        <thead>
+                            <tr className="border-b border-slate-800 text-slate-400">
+                                <th className="pb-2.5 font-medium">Concepto</th>
+                                <th className="pb-2.5 font-medium">Frecuencia</th>
+                                <th className="pb-2.5 font-medium">Monto (USD)</th>
+                                <th className="pb-2.5 font-medium">Observaciones</th>
+                                <th className="pb-2.5 text-right font-medium">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-800/60">
+                            {expenses.map((exp) => (
+                                <tr key={exp.id} className="hover:bg-slate-800/25">
+                                    <td className="py-2.5 font-medium text-white">
+                                        {editingExpId === exp.id ? (
+                                            <input
+                                                value={editingExpDraft.concept || ''}
+                                                onChange={(e) =>
+                                                    setEditingExpDraft({ ...editingExpDraft, concept: e.target.value })
+                                                }
+                                                className="w-full rounded border border-slate-700 bg-slate-900 px-2 py-1 text-xs text-white"
+                                            />
+                                        ) : (
+                                            exp.concept
+                                        )}
+                                    </td>
+                                    <td className="py-2.5 text-slate-300">
+                                        {editingExpId === exp.id ? (
+                                            <select
+                                                value={editingExpDraft.frequency || 'Semanal'}
+                                                onChange={(e) =>
+                                                    setEditingExpDraft({ ...editingExpDraft, frequency: e.target.value })
+                                                }
+                                                className="rounded border border-slate-700 bg-slate-900 px-2 py-1 text-xs text-white"
+                                            >
+                                                <option value="Semanal">Semanal</option>
+                                                <option value="Mensual">Mensual</option>
+                                                <option value="Trimestral">Trimestral</option>
+                                                <option value="Anual">Anual</option>
+                                                <option value="Único">Pago Único</option>
+                                            </select>
+                                        ) : (
+                                            <span className="rounded-md bg-slate-800 px-2 py-0.5 text-[11px] text-slate-300">
+                                                {exp.frequency}
+                                            </span>
+                                        )}
+                                    </td>
+                                    <td className="py-2.5 font-semibold text-rose-400">
+                                        {editingExpId === exp.id ? (
+                                            <input
+                                                type="number"
+                                                step="0.01"
+                                                value={editingExpDraft.amount_usd ?? 0}
+                                                onChange={(e) =>
+                                                    setEditingExpDraft({ ...editingExpDraft, amount_usd: e.target.value })
+                                                }
+                                                className="w-24 rounded border border-slate-700 bg-slate-900 px-2 py-1 text-xs text-white"
+                                            />
+                                        ) : (
+                                            `$${Number(exp.amount_usd).toFixed(2)} USD`
+                                        )}
+                                    </td>
+                                    <td className="py-2.5 text-slate-400">
+                                        {editingExpId === exp.id ? (
+                                            <input
+                                                value={editingExpDraft.notes || ''}
+                                                onChange={(e) =>
+                                                    setEditingExpDraft({ ...editingExpDraft, notes: e.target.value })
+                                                }
+                                                className="w-full rounded border border-slate-700 bg-slate-900 px-2 py-1 text-xs text-white"
+                                            />
+                                        ) : (
+                                            exp.notes || '—'
+                                        )}
+                                    </td>
+                                    <td className="py-2.5 text-right">
+                                        {editingExpId === exp.id ? (
+                                            <div className="flex justify-end gap-2">
+                                                <button
+                                                    onClick={saveEditExpense}
+                                                    title="Guardar cambios en Supabase"
+                                                    className="rounded bg-emerald-500/20 p-1 text-emerald-400 hover:bg-emerald-500/30"
+                                                >
+                                                    <Save className="h-3.5 w-3.5" />
+                                                </button>
+                                                <button
+                                                    onClick={() => setEditingExpId(null)}
+                                                    className="rounded bg-slate-800 p-1 text-slate-400 hover:text-white"
+                                                >
+                                                    <X className="h-3.5 w-3.5" />
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <div className="flex justify-end gap-2">
+                                                <button
+                                                    onClick={() => startEditExpense(exp)}
+                                                    title="Editar gasto fijo"
+                                                    className="text-slate-400 hover:text-violet-400"
+                                                >
+                                                    <Edit3 className="h-3.5 w-3.5" />
+                                                </button>
+                                                <button
+                                                    onClick={() => confirmDeleteExpense(exp)}
+                                                    title="Eliminar gasto fijo"
+                                                    className="text-slate-400 hover:text-rose-400"
+                                                >
+                                                    <Trash2 className="h-3.5 w-3.5" />
+                                                </button>
+                                            </div>
+                                        )}
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
                 </div>
             </div>
 
