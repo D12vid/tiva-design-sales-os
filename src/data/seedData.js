@@ -1,6 +1,7 @@
 export const PRODUCT_CATALOG = [
     { name: 'Adobe', defaultPrice: 6.0, defaultBs: 6000, category: 'Diseño & Creatividad' },
-    { name: 'Office', defaultPrice: 15.0, defaultBs: 14600, category: 'Ofimática' },
+    { name: 'Combo Creativo', defaultPrice: 8.0, defaultBs: 8000, category: 'Canva Pro + CapCut Pro (1 Mes)' },
+    { name: 'Office', defaultPrice: 15.0, defaultBs: 15000, category: 'Ofimática Permanente' },
     { name: 'Canva Pro', defaultPrice: 5.0, defaultBs: 5000, category: 'Diseño & Creatividad' },
     { name: 'CapCut Pro', defaultPrice: 6.0, defaultBs: 6000, category: 'Edición de Video' },
     { name: 'ChatGPT Plus', defaultPrice: 10.0, defaultBs: 10000, category: 'Inteligencia Artificial' }

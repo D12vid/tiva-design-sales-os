@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     PlusCircle,
     Search,
@@ -10,7 +10,10 @@ import {
     Edit3,
     Save,
     X,
-    Lock
+    Lock,
+    Calculator,
+    ArrowRightLeft,
+    Zap
 } from 'lucide-react';
 import {
     PRODUCT_CATALOG,
@@ -24,6 +27,7 @@ import {
 export default function SellerView({
     sales,
     paidWeeks,
+    exchangeRate = 1000,
     onAddSale,
     onUpdateSale,
     onDeleteSale,
@@ -40,14 +44,28 @@ export default function SellerView({
         client_name: '',
         product: 'Adobe',
         price_usd: 6,
-        amount_bs: 6000,
+        amount_bs: Math.round(6 * exchangeRate),
         payment_method: 'Pago Móvil',
         channel: 'Meta Ads'
     });
+    const [manualBsOverride, setManualBsOverride] = useState(false);
     const [error, setError] = useState('');
     const [search, setSearch] = useState('');
     const [editingId, setEditingId] = useState(null);
     const [editDraft, setEditDraft] = useState({});
+
+    // Estado de la Calculadora Rápida de Cambio (USD <-> Bs)
+    const [calcUsd, setCalcUsd] = useState(6);
+    const [calcBs, setCalcBs] = useState(Math.round(6 * exchangeRate));
+
+    // Recalcular automáticamente el monto en Bs cuando cambia la Tasa del Día o el Precio USD
+    useEffect(() => {
+        if (!manualBsOverride) {
+            const autoBs = Math.round(Number(formData.price_usd || 0) * Number(exchangeRate || 1000));
+            setFormData((prev) => ({ ...prev, amount_bs: autoBs }));
+        }
+        setCalcBs(Math.round(Number(calcUsd || 0) * Number(exchangeRate || 1000)));
+    }, [exchangeRate, formData.price_usd, manualBsOverride, calcUsd]);
 
     const activeWeekObj =
         weeksList.find((w) => w.id === Number(selectedWeekId)) || weeksList[weeksList.length - 1];
@@ -74,11 +92,24 @@ export default function SellerView({
 
     const handleProductChange = (prodName) => {
         const found = PRODUCT_CATALOG.find((p) => p.name === prodName);
+        const newPriceUsd = found ? found.defaultPrice : Number(formData.price_usd);
+        const autoBs = Math.round(newPriceUsd * Number(exchangeRate || 1000));
+        setManualBsOverride(false);
         setFormData((prev) => ({
             ...prev,
             product: prodName,
-            price_usd: found ? found.defaultPrice : prev.price_usd,
-            amount_bs: found ? found.defaultBs : prev.amount_bs
+            price_usd: newPriceUsd,
+            amount_bs: autoBs
+        }));
+    };
+
+    const handlePriceUsdChange = (newUsdValue) => {
+        const numUsd = Number(newUsdValue);
+        setManualBsOverride(false);
+        setFormData((prev) => ({
+            ...prev,
+            price_usd: newUsdValue,
+            amount_bs: Math.round(numUsd * Number(exchangeRate || 1000))
         }));
     };
 
@@ -105,6 +136,7 @@ export default function SellerView({
             commission_usd: Number((price * 0.15).toFixed(2)),
             is_template_row: false
         });
+        setManualBsOverride(false);
         setFormData((prev) => ({ ...prev, client_name: '' }));
     };
 
@@ -148,6 +180,7 @@ export default function SellerView({
 
     return (
         <div className="space-y-6">
+            {/* Selector de Semanas Operativas */}
             <div className="rounded-2xl border border-emerald-900/70 bg-[#071917]/90 p-4 shadow-xl backdrop-blur-md">
                 <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                     <div className="flex items-center gap-2">
@@ -204,15 +237,47 @@ export default function SellerView({
             </div>
 
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+                {/* Formulario con Selección Rápida y Autocálculo Bs/USD */}
                 <div className="rounded-2xl border border-emerald-900/70 bg-[#071917]/90 p-5 shadow-xl lg:col-span-2">
-                    <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+                    <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                         <h2 className="flex items-center gap-2 text-base font-bold text-white">
                             <PlusCircle className="h-5 w-5 text-lime-400" />
                             Registrar Venta — Semana {selectedWeekId}
                         </h2>
                         <span className="rounded-lg border border-lime-400/30 bg-lime-400/10 px-2.5 py-1 text-xs font-semibold text-lime-300">
-                            Comisión Vendedor: 15% (${(Number(formData.price_usd || 0) * 0.15).toFixed(2)} USD)
+                            Comisión 15%: ${(Number(formData.price_usd || 0) * 0.15).toFixed(2)} USD (
+                            {Math.round(Number(formData.price_usd || 0) * 0.15 * exchangeRate).toLocaleString()} Bs)
                         </span>
+                    </div>
+
+                    {/* Botones de Selección Rápida de Licencias con Conversión en Vivo */}
+                    <div className="mb-4 flex flex-wrap items-center gap-2 rounded-xl border border-emerald-900/80 bg-[#030C0A] p-2.5">
+                        <span className="flex items-center gap-1 text-[11px] font-bold text-lime-400">
+                            <Zap className="h-3.5 w-3.5" /> Selección Rápida:
+                        </span>
+                        {[
+                            { name: 'Adobe', price: 6 },
+                            { name: 'Combo Creativo', price: 8 },
+                            { name: 'Office', price: 15 },
+                            { name: 'Canva Pro', price: 5 },
+                            { name: 'ChatGPT Plus', price: 10 }
+                        ].map((item) => {
+                            const bsVal = Math.round(item.price * exchangeRate);
+                            const active = formData.product === item.name && Number(formData.price_usd) === item.price;
+                            return (
+                                <button
+                                    key={item.name}
+                                    type="button"
+                                    onClick={() => handleProductChange(item.name)}
+                                    className={`rounded-lg border px-2.5 py-1 text-xs font-semibold transition ${active
+                                            ? 'border-lime-400 bg-lime-400 text-[#030C0A] shadow-sm'
+                                            : 'border-emerald-800/80 bg-[#071917] text-emerald-100 hover:border-lime-400/50'
+                                        }`}
+                                >
+                                    {item.name} (${item.price}) → <strong>{bsVal.toLocaleString()} Bs</strong>
+                                </button>
+                            );
+                        })}
                     </div>
 
                     {error && (
@@ -263,7 +328,9 @@ export default function SellerView({
                                 className="w-full rounded-xl border border-emerald-900 bg-[#030C0A] px-3 py-2 text-xs text-white focus:border-lime-400 focus:outline-none"
                             >
                                 {PRODUCT_CATALOG.map((p) => (
-                                    <option key={p.name} value={p.name}>{p.name}</option>
+                                    <option key={p.name} value={p.name}>
+                                        {p.name} (${p.defaultPrice})
+                                    </option>
                                 ))}
                             </select>
                         </div>
@@ -274,20 +341,26 @@ export default function SellerView({
                                 type="number"
                                 step="0.01"
                                 value={formData.price_usd}
-                                onChange={(e) => setFormData({ ...formData, price_usd: e.target.value })}
-                                className="w-full rounded-xl border border-emerald-900 bg-[#030C0A] px-3 py-2 text-xs text-white focus:border-lime-400 focus:outline-none"
+                                onChange={(e) => handlePriceUsdChange(e.target.value)}
+                                className="w-full rounded-xl border border-emerald-900 bg-[#030C0A] px-3 py-2 text-xs font-bold text-white focus:border-lime-400 focus:outline-none"
                                 required
                             />
                         </div>
 
                         <div>
-                            <label className="mb-1 block text-xs text-emerald-200/70">Monto Recibido (Bs)</label>
+                            <div className="mb-1 flex items-center justify-between text-xs">
+                                <span className="text-emerald-200/70">Monto en Bs (Auto)</span>
+                                <span className="text-[10px] font-bold text-lime-400">Tasa: {exchangeRate}</span>
+                            </div>
                             <input
                                 type="number"
                                 step="1"
                                 value={formData.amount_bs}
-                                onChange={(e) => setFormData({ ...formData, amount_bs: e.target.value })}
-                                className="w-full rounded-xl border border-emerald-900 bg-[#030C0A] px-3 py-2 text-xs text-white focus:border-lime-400 focus:outline-none"
+                                onChange={(e) => {
+                                    setManualBsOverride(true);
+                                    setFormData({ ...formData, amount_bs: e.target.value });
+                                }}
+                                className="w-full rounded-xl border border-lime-400/50 bg-[#030C0A] px-3 py-2 text-xs font-extrabold text-lime-300 focus:border-lime-400 focus:outline-none"
                                 required
                             />
                         </div>
@@ -323,14 +396,15 @@ export default function SellerView({
                                 type="submit"
                                 className="w-full rounded-xl bg-gradient-to-r from-lime-400 to-emerald-400 px-4 py-2.5 text-xs font-extrabold text-[#030C0A] shadow-lg shadow-lime-400/20 transition hover:brightness-105"
                             >
-                                Guardar Venta en Semana {formData.week_id}
+                                Guardar Venta ({Number(formData.amount_bs).toLocaleString()} Bs / ${Number(formData.price_usd).toFixed(2)} USD)
                             </button>
                         </div>
                     </form>
                 </div>
 
-                <div className="flex flex-col justify-between rounded-2xl border border-emerald-900/70 bg-[#071917]/90 p-5 shadow-xl">
-                    <div>
+                {/* Columna Derecha: Liquidación Semanal + Calculadora Rápida de Cambio */}
+                <div className="flex flex-col justify-between gap-4">
+                    <div className="rounded-2xl border border-emerald-900/70 bg-[#071917]/90 p-5 shadow-xl">
                         <div className="flex items-center justify-between gap-2">
                             <span className="text-xs font-bold text-white">
                                 Liquidación Semana {selectedWeekId}
@@ -350,9 +424,14 @@ export default function SellerView({
 
                         <p className="mt-1 text-[11px] text-emerald-200/70">{activeWeekObj.rangeText}</p>
 
-                        <div className="mt-4 rounded-xl border border-emerald-900/80 bg-[#030C0A] p-3.5">
+                        <div className="mt-3 rounded-xl border border-emerald-900/80 bg-[#030C0A] p-3">
                             <span className="text-[11px] text-emerald-200/60">Total a cobrar por el vendedor</span>
-                            <p className="mt-0.5 text-2xl font-extrabold text-lime-400">${totalPayout.toFixed(2)} USD</p>
+                            <div className="mt-0.5 flex items-baseline justify-between">
+                                <p className="text-2xl font-extrabold text-lime-400">${totalPayout.toFixed(2)} USD</p>
+                                <span className="text-xs font-semibold text-emerald-200/80">
+                                    ≈ {Math.round(totalPayout * exchangeRate).toLocaleString()} Bs
+                                </span>
+                            </div>
                             <div className="mt-2 flex justify-between border-t border-emerald-900/60 pt-2 text-[11px] text-emerald-100/80">
                                 <span>Comisión 15% (${weekRevenue.toFixed(2)} ventas):</span>
                                 <strong className="text-white">${weekCommission.toFixed(2)} USD</strong>
@@ -365,12 +444,12 @@ export default function SellerView({
                             </div>
                         </div>
 
-                        <div className="mt-4">
-                            <div className="mb-1.5 flex justify-between text-xs">
+                        <div className="mt-3">
+                            <div className="mb-1 flex justify-between text-xs">
                                 <span className="text-emerald-100/80">Progreso Meta Bono</span>
                                 <span className="font-bold text-lime-300">{weekCount} / 15 ventas</span>
                             </div>
-                            <div className="h-2.5 w-full overflow-hidden rounded-full bg-[#030C0A]">
+                            <div className="h-2 w-full overflow-hidden rounded-full bg-[#030C0A]">
                                 <div
                                     className="h-full rounded-full bg-gradient-to-r from-lime-400 to-emerald-400 transition-all duration-500"
                                     style={{ width: `${Math.min(100, (weekCount / 15) * 100)}%` }}
@@ -379,27 +458,54 @@ export default function SellerView({
                         </div>
                     </div>
 
-                    <div
-                        className={`mt-4 rounded-xl border p-3 text-xs ${isWeekPaid
-                                ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-200'
-                                : 'border-lime-400/35 bg-lime-400/10 text-lime-200'
-                            }`}
-                    >
-                        {isWeekPaid ? (
-                            <div className="flex items-center gap-2 font-medium">
-                                <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-400" />
-                                <span>Esta semana ya fue liquidada y pagada al vendedor.</span>
+                    {/* Calculadora Bidireccional de Cambio en Vivo */}
+                    <div className="rounded-2xl border border-lime-400/30 bg-[#071917]/90 p-4 shadow-xl">
+                        <div className="mb-2.5 flex items-center justify-between">
+                            <span className="flex items-center gap-1.5 text-xs font-bold text-white">
+                                <Calculator className="h-4 w-4 text-lime-400" />
+                                Calculadora de Cambio Rápida
+                            </span>
+                            <span className="text-[11px] font-semibold text-lime-300">
+                                1 USD = {exchangeRate} Bs
+                            </span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2.5">
+                            <div>
+                                <label className="mb-1 block text-[10px] text-emerald-200/70">Monto en USD ($)</label>
+                                <input
+                                    type="number"
+                                    step="0.01"
+                                    value={calcUsd}
+                                    onChange={(e) => {
+                                        const u = e.target.value;
+                                        setCalcUsd(u);
+                                        setCalcBs(Math.round(Number(u || 0) * exchangeRate));
+                                    }}
+                                    className="w-full rounded-lg border border-emerald-800 bg-[#030C0A] px-2.5 py-1.5 text-xs font-bold text-white focus:border-lime-400 focus:outline-none"
+                                />
                             </div>
-                        ) : (
-                            <div className="flex items-center gap-2 font-medium">
-                                <Award className="h-4 w-4 shrink-0 text-lime-400" />
-                                <span>Semana activa pendiente de liquidación al cierre del domingo.</span>
+                            <div>
+                                <label className="mb-1 block text-[10px] text-emerald-200/70">Equivalente en Bs</label>
+                                <input
+                                    type="number"
+                                    step="1"
+                                    value={calcBs}
+                                    onChange={(e) => {
+                                        const b = e.target.value;
+                                        setCalcBs(b);
+                                        setCalcUsd(
+                                            exchangeRate > 0 ? Number((Number(b || 0) / exchangeRate).toFixed(2)) : 0
+                                        );
+                                    }}
+                                    className="w-full rounded-lg border border-emerald-800 bg-[#030C0A] px-2.5 py-1.5 text-xs font-extrabold text-lime-400 focus:border-lime-400 focus:outline-none"
+                                />
                             </div>
-                        )}
+                        </div>
                     </div>
                 </div>
             </div>
 
+            {/* Tabla de Ventas de la Semana */}
             <div className="rounded-2xl border border-emerald-900/70 bg-[#071917]/90 p-5 shadow-xl">
                 <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                     <div className="flex flex-wrap items-center gap-2.5">
@@ -467,7 +573,7 @@ export default function SellerView({
                                         </td>
                                         <td className="py-2.5">
                                             <span
-                                                className={`rounded-md px-2 py-0.5 font-semibold ${s.product === 'Office'
+                                                className={`rounded-md px-2 py-0.5 font-semibold ${s.product === 'Office' || s.product === 'Combo Creativo'
                                                         ? 'bg-violet-500/20 text-violet-300'
                                                         : 'bg-lime-400/15 text-lime-300'
                                                     }`}

@@ -30,8 +30,10 @@ export default function App() {
         const saved = localStorage.getItem('tiva_paid_weeks_v2');
         return saved ? JSON.parse(saved) : INITIAL_PAID_WEEKS;
     });
-
-    const [funnel, setFunnel] = useState({ visitors: 2450, leads: 480, exchange_rate: 60 });
+    const [funnel, setFunnel] = useState(() => {
+        const saved = localStorage.getItem('tiva_funnel_v2');
+        return saved ? JSON.parse(saved) : { visitors: 2450, leads: 480, exchange_rate: 1000 };
+    });
 
     useEffect(() => {
         localStorage.setItem('tiva_sales_v2', JSON.stringify(sales));
@@ -44,6 +46,10 @@ export default function App() {
     useEffect(() => {
         localStorage.setItem('tiva_paid_weeks_v2', JSON.stringify(paidWeeks));
     }, [paidWeeks]);
+
+    useEffect(() => {
+        localStorage.setItem('tiva_funnel_v2', JSON.stringify(funnel));
+    }, [funnel]);
 
     useEffect(() => {
         if (!isSupabaseConfigured || !supabase) return;
@@ -69,6 +75,20 @@ export default function App() {
                 });
                 setPaidWeeks(mapped);
             }
+
+            const { data: funnelData } = await supabase
+                .from('funnel_settings')
+                .select('*')
+                .eq('id', 1)
+                .maybeSingle();
+            if (funnelData && funnelData.exchange_rate) {
+                setFunnel((prev) => ({
+                    ...prev,
+                    visitors: Number(funnelData.visitors || prev.visitors),
+                    leads: Number(funnelData.leads || prev.leads),
+                    exchange_rate: Number(funnelData.exchange_rate)
+                }));
+            }
         };
         fetchAllData();
 
@@ -77,6 +97,7 @@ export default function App() {
             .on('postgres_changes', { event: '*', schema: 'public', table: 'sales' }, fetchAllData)
             .on('postgres_changes', { event: '*', schema: 'public', table: 'expenses' }, fetchAllData)
             .on('postgres_changes', { event: '*', schema: 'public', table: 'weekly_payouts' }, fetchAllData)
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'funnel_settings' }, fetchAllData)
             .subscribe();
 
         return () => {
@@ -118,6 +139,23 @@ export default function App() {
         setActiveRole('vendedor');
     };
 
+    const handleUpdateExchangeRate = async (newRate) => {
+        const numericRate = Number(newRate);
+        if (!numericRate || numericRate <= 0) return;
+
+        setFunnel((prev) => ({ ...prev, exchange_rate: numericRate }));
+
+        if (isSupabaseConfigured && supabase) {
+            await supabase.from('funnel_settings').upsert({
+                id: 1,
+                visitors: funnel.visitors,
+                leads: funnel.leads,
+                exchange_rate: numericRate,
+                updated_at: new Date().toISOString()
+            });
+        }
+    };
+
     const handleToggleWeekPaid = async (weekId) => {
         const nextState = !paidWeeks[weekId];
         setPaidWeeks((prev) => ({ ...prev, [weekId]: nextState }));
@@ -155,7 +193,7 @@ export default function App() {
         }
     };
 
-    // CRUD Gastos Operativos Fijos en Vivo
+    // CRUD Gastos Operativos Fijos
     const handleAddExpense = async (newExpense) => {
         const tempId = `exp-${Date.now()}`;
         const optimistic = { ...newExpense, id: tempId };
@@ -213,6 +251,8 @@ export default function App() {
                 auditCleanMode={auditCleanMode}
                 setAuditCleanMode={setAuditCleanMode}
                 isLiveDb={isSupabaseConfigured}
+                exchangeRate={funnel.exchange_rate}
+                onUpdateExchangeRate={handleUpdateExchangeRate}
             />
 
             <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
@@ -233,6 +273,7 @@ export default function App() {
                     <SellerView
                         sales={displayedSales}
                         paidWeeks={paidWeeks}
+                        exchangeRate={funnel.exchange_rate}
                         onAddSale={handleAddSale}
                         onUpdateSale={handleUpdateSale}
                         onDeleteSale={handleDeleteSale}
@@ -242,21 +283,21 @@ export default function App() {
             </main>
 
             {showPinModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm">
-                    <div className="w-full max-w-sm rounded-2xl border border-slate-800 bg-[#12141D] p-6 shadow-2xl">
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm">
+                    <div className="w-full max-w-sm rounded-2xl border border-emerald-900/80 bg-[#071917] p-6 shadow-2xl">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2.5">
-                                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-500/15 text-violet-400">
+                                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-lime-400/15 text-lime-400">
                                     <Lock className="h-5 w-5" />
                                 </div>
                                 <div>
                                     <h3 className="text-sm font-bold text-white">Acceso Ejecutivo</h3>
-                                    <p className="text-[11px] text-slate-400">Ingresa el PIN de administrador</p>
+                                    <p className="text-[11px] text-emerald-200/70">Ingresa el PIN de administrador</p>
                                 </div>
                             </div>
                             <button
                                 onClick={() => setShowPinModal(false)}
-                                className="rounded-lg p-1 text-slate-400 hover:bg-slate-800 hover:text-white"
+                                className="rounded-lg p-1 text-emerald-200/60 hover:bg-emerald-900/40 hover:text-white"
                             >
                                 <X className="h-4 w-4" />
                             </button>
@@ -270,7 +311,7 @@ export default function App() {
                                     placeholder="••••"
                                     value={pinInput}
                                     onChange={(e) => setPinInput(e.target.value)}
-                                    className="w-full rounded-xl border border-slate-800 bg-[#090A0F] px-4 py-2.5 text-center text-lg tracking-[0.4em] text-white focus:border-violet-500 focus:outline-none"
+                                    className="w-full rounded-xl border border-emerald-900 bg-[#030C0A] px-4 py-2.5 text-center text-lg tracking-[0.4em] text-lime-400 focus:border-lime-400 focus:outline-none"
                                     required
                                 />
                             </div>
@@ -286,13 +327,13 @@ export default function App() {
                                 <button
                                     type="button"
                                     onClick={() => setShowPinModal(false)}
-                                    className="w-1/2 rounded-xl border border-slate-800 bg-[#090A0F] py-2 text-xs font-medium text-slate-300 hover:bg-slate-800"
+                                    className="w-1/2 rounded-xl border border-emerald-900 bg-[#030C0A] py-2 text-xs font-medium text-emerald-100 hover:bg-emerald-950"
                                 >
                                     Cancelar
                                 </button>
                                 <button
                                     type="submit"
-                                    className="w-1/2 rounded-xl bg-gradient-to-r from-violet-600 to-cyan-600 py-2 text-xs font-semibold text-white shadow-lg shadow-violet-600/20 hover:opacity-95"
+                                    className="w-1/2 rounded-xl bg-gradient-to-r from-lime-400 to-emerald-400 py-2 text-xs font-extrabold text-[#030C0A] shadow-lg shadow-lime-400/20 hover:brightness-105"
                                 >
                                     Desbloquear
                                 </button>
