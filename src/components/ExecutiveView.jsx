@@ -28,7 +28,7 @@ import { getDynamicWeeksCalendar } from '../data/seedData';
 export default function ExecutiveView({
     sales = [],
     expenses = [],
-    funnel = { visitors: 2450, leads: 480 },
+    funnel = { visitors: 2450, leads: 480, exchange_rate: 1000 },
     setFunnel = () => { },
     paidWeeks = {},
     onToggleWeekPaid = () => { },
@@ -161,7 +161,7 @@ export default function ExecutiveView({
         }
     };
 
-    // Nodos del gráfico combinado
+    // Nodos del gráfico combinado (S1-S6 + S8-S11)
     const historicalChartNodes = weeklyPayroll.slice(0, 6).map((w, i, arr) => {
         const prevRev = i > 0 ? arr[i - 1].revenue : w.revenue;
         const wowPct = i > 0 && prevRev > 0 ? ((w.revenue - prevRev) / prevRev) * 100 : 0;
@@ -240,6 +240,7 @@ export default function ExecutiveView({
         return acc;
     }, {});
 
+    // Paleta Oficial Tiva Design: Verde Lima Ácido, Esmeralda, Violeta Creativo, Turquesa y Ámbar
     const palette = ['#A3E635', '#10B981', '#8B5CF6', '#06B6D4', '#F59E0B'];
 
     const buildDonutSegments = (dataObj) => {
@@ -300,15 +301,15 @@ export default function ExecutiveView({
     return (
         <div className="space-y-6">
             {/* Barra Superior de Acciones Ejecutivas */}
-            <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-800 bg-[#12141D] px-4 py-3">
-                <div className="flex flex-wrap items-center gap-3 text-xs text-slate-300">
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-emerald-900/70 bg-[#071917]/90 px-4 py-3 shadow-xl backdrop-blur-md">
+                <div className="flex flex-wrap items-center gap-3 text-xs text-emerald-100">
                     <span>
                         Conciliación:{' '}
-                        <strong className="text-violet-300">
-                            {useSheetFormulaMode ? 'Fórmula Hoja DASHBOARD' : 'Deducción Total de Comisiones'}
+                        <strong className="text-lime-400">
+                            {useSheetFormulaMode ? 'Fórmula Hoja DASHBOARD ($607.85)' : 'Deducción Total de Comisiones ($581.75)'}
                         </strong>
                     </span>
-                    <span className="rounded-md border border-amber-500/30 bg-amber-500/10 px-2.5 py-0.5 font-medium text-amber-300">
+                    <span className="rounded-md border border-lime-400/35 bg-lime-400/10 px-2.5 py-0.5 font-semibold text-lime-300">
                         Por liquidar desde Lun 02 Nov: ${pendingPayoutTotal.toFixed(2)} USD
                     </span>
                 </div>
@@ -316,109 +317,113 @@ export default function ExecutiveView({
                 <div className="flex flex-wrap items-center gap-2">
                     <button
                         onClick={exportToCSV}
-                        className="flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-800 px-3 py-1.5 text-xs font-medium text-slate-200 hover:bg-slate-700"
+                        className="flex items-center gap-1.5 rounded-lg border border-emerald-800 bg-[#030C0A] px-3 py-1.5 text-xs font-semibold text-emerald-100 hover:border-lime-400/50"
                     >
-                        <Download className="h-3.5 w-3.5 text-cyan-400" />
+                        <Download className="h-3.5 w-3.5 text-lime-400" />
                         Exportar CSV
                     </button>
                     <button
                         onClick={shareWhatsAppPayroll}
-                        className="flex items-center gap-1.5 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-1.5 text-xs font-medium text-emerald-300 hover:bg-emerald-500/20"
+                        className="flex items-center gap-1.5 rounded-lg border border-emerald-500/35 bg-emerald-500/15 px-3 py-1.5 text-xs font-semibold text-emerald-300 hover:bg-emerald-500/25"
                     >
                         <Share2 className="h-3.5 w-3.5" />
                         Enviar Resumen WhatsApp
                     </button>
                     <button
                         onClick={() => setUseSheetFormulaMode(!useSheetFormulaMode)}
-                        className="rounded-lg border border-violet-500/40 bg-violet-500/10 px-3 py-1.5 text-xs font-medium text-violet-300 hover:bg-violet-500/20"
+                        className="rounded-lg border border-lime-400/40 bg-lime-400/15 px-3 py-1.5 text-xs font-bold text-lime-300 hover:bg-lime-400/25"
                     >
                         Alternar Fórmula
                     </button>
                 </div>
             </div>
 
-            {/* 5 Tarjetas KPI */}
+            {/* 5 Tarjetas KPI con Estética Verde Lima y Petróleo */}
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
-                <div className="rounded-2xl border border-slate-800 bg-[#12141D] p-5">
-                    <div className="flex items-center justify-between text-xs text-slate-400">
+                <div className="rounded-2xl border border-emerald-900/70 bg-[#071917]/90 p-5 shadow-xl">
+                    <div className="flex items-center justify-between text-xs text-emerald-200/70">
                         <span>Ingresos Brutos</span>
-                        <DollarSign className="h-4 w-4 text-violet-400" />
+                        <DollarSign className="h-4 w-4 text-lime-400" />
                     </div>
-                    <p className="mt-2 text-2xl font-bold text-white">${grossRevenue.toFixed(2)} USD</p>
-                    <p className="mt-1 text-xs text-emerald-400">Ganancia Neta: ${netProfit.toFixed(2)} USD</p>
+                    <p className="mt-2 text-2xl font-extrabold text-white">${grossRevenue.toFixed(2)} USD</p>
+                    <p className="mt-1 text-xs font-semibold text-lime-400">Ganancia Neta: ${netProfit.toFixed(2)} USD</p>
                 </div>
 
-                <div className="rounded-2xl border border-slate-800 bg-[#12141D] p-5">
-                    <div className="flex items-center justify-between text-xs text-slate-400">
+                <div className="rounded-2xl border border-emerald-900/70 bg-[#071917]/90 p-5 shadow-xl">
+                    <div className="flex items-center justify-between text-xs text-emerald-200/70">
                         <span>Pedidos Cerrados</span>
-                        <ShoppingBag className="h-4 w-4 text-cyan-400" />
+                        <ShoppingBag className="h-4 w-4 text-emerald-400" />
                     </div>
-                    <p className="mt-2 text-2xl font-bold text-white">{totalOrders} ventas</p>
-                    <p className="mt-1 text-xs text-slate-400">Media: {avgWeeklyOrders.toFixed(1)} pedidos/sem</p>
+                    <p className="mt-2 text-2xl font-extrabold text-white">{totalOrders} ventas</p>
+                    <p className="mt-1 text-xs text-emerald-200/60">Media: {avgWeeklyOrders.toFixed(1)} pedidos/sem</p>
                 </div>
 
-                <div className="rounded-2xl border border-slate-800 bg-[#12141D] p-5">
-                    <div className="flex items-center justify-between text-xs text-slate-400">
+                <div className="rounded-2xl border border-emerald-900/70 bg-[#071917]/90 p-5 shadow-xl">
+                    <div className="flex items-center justify-between text-xs text-emerald-200/70">
                         <span>Promedio Semanal</span>
-                        <TrendingUp className="h-4 w-4 text-emerald-400" />
+                        <TrendingUp className="h-4 w-4 text-lime-400" />
                     </div>
-                    <p className="mt-2 text-2xl font-bold text-white">${avgWeeklyRev.toFixed(2)} USD</p>
-                    <p className="mt-1 text-xs text-slate-400">Ticket medio: ${averageTicket.toFixed(2)} USD</p>
+                    <p className="mt-2 text-2xl font-extrabold text-white">${avgWeeklyRev.toFixed(2)} USD</p>
+                    <p className="mt-1 text-xs text-emerald-200/60">Ticket medio: ${averageTicket.toFixed(2)} USD</p>
                 </div>
 
-                <div className="rounded-2xl border border-slate-800 bg-[#12141D] p-5">
-                    <div className="flex items-center justify-between text-xs text-slate-400">
+                <div className="rounded-2xl border border-emerald-900/70 bg-[#071917]/90 p-5 shadow-xl">
+                    <div className="flex items-center justify-between text-xs text-emerald-200/70">
                         <span>Margen Neto</span>
-                        <Percent className="h-4 w-4 text-amber-400" />
+                        <Percent className="h-4 w-4 text-emerald-400" />
                     </div>
-                    <p className="mt-2 text-2xl font-bold text-white">{netMarginPct.toFixed(1)}%</p>
+                    <p className="mt-2 text-2xl font-extrabold text-white">{netMarginPct.toFixed(1)}%</p>
                     <p className="mt-1 text-xs text-rose-400">Gastos fijos: ${fixedExpensesTotal.toFixed(2)} USD</p>
                 </div>
 
-                <div className="rounded-2xl border border-violet-500/40 bg-gradient-to-br from-violet-600/15 to-cyan-500/10 p-5 sm:col-span-2 lg:col-span-1">
-                    <div className="flex items-center justify-between text-xs text-violet-300">
+                <div className="rounded-2xl border border-lime-400/45 bg-gradient-to-br from-lime-400/15 to-emerald-500/10 p-5 shadow-xl sm:col-span-2 lg:col-span-1">
+                    <div className="flex items-center justify-between text-xs font-semibold text-lime-300">
                         <span>Proyección Mensual (4 Sem)</span>
-                        <Sparkles className="h-4 w-4 text-cyan-400" />
+                        <Sparkles className="h-4 w-4 text-lime-400" />
                     </div>
-                    <p className="mt-2 text-2xl font-bold text-white">${projected4WeeksRevenue.toFixed(2)} USD</p>
-                    <p className="mt-1 text-xs text-cyan-300">
+                    <p className="mt-2 text-2xl font-extrabold text-white">${projected4WeeksRevenue.toFixed(2)} USD</p>
+                    <p className="mt-1 text-xs font-medium text-emerald-300">
                         Neto estimado: ${projected4WeeksNet.toFixed(2)} USD
                     </p>
                 </div>
             </div>
 
             {/* Gráfico Combinado SVG: Histórico S1-S6 + Proyección Dinámica S8-S11 */}
-            <div className="rounded-2xl border border-slate-800 bg-[#12141D] p-5">
+            <div className="rounded-2xl border border-emerald-900/70 bg-[#071917]/90 p-5 shadow-xl">
                 <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                     <div>
-                        <h3 className="flex items-center gap-2 text-sm font-semibold text-white">
-                            <BarChart3 className="h-5 w-5 text-violet-400" />
+                        <h3 className="flex items-center gap-2 text-sm font-bold text-white">
+                            <BarChart3 className="h-5 w-5 text-lime-400" />
                             Curva de Evolución Histórica (S1–S6) + Proyección Dinámica (S8–S11)
                         </h3>
-                        <p className="text-xs text-slate-400">
-                            Cierres reales en violeta y proyección interactiva de noviembre en cian
+                        <p className="text-xs text-emerald-200/70">
+                            Cierres reales en verde lima (#A3E635) y proyección interactiva de noviembre en verde esmeralda
                         </p>
                     </div>
 
                     <div className="flex flex-wrap items-center gap-2">
-                        <div className="flex rounded-xl border border-slate-800 bg-[#090A0F] p-1 text-xs">
+                        <div className="flex rounded-xl border border-emerald-900 bg-[#030C0A] p-1 text-xs">
                             <button
                                 onClick={() => setChartStyle('area')}
-                                className={`rounded-lg px-2.5 py-1 ${chartStyle === 'area' ? 'bg-cyan-600 text-white' : 'text-slate-400 hover:text-white'
+                                className={`rounded-lg px-2.5 py-1 font-bold transition ${chartStyle === 'area'
+                                        ? 'bg-lime-400 text-[#030C0A]'
+                                        : 'text-emerald-200/70 hover:text-white'
                                     }`}
                             >
                                 Curva SVG
                             </button>
                             <button
                                 onClick={() => setChartStyle('bars')}
-                                className={`rounded-lg px-2.5 py-1 ${chartStyle === 'bars' ? 'bg-cyan-600 text-white' : 'text-slate-400 hover:text-white'
+                                className={`rounded-lg px-2.5 py-1 font-bold transition ${chartStyle === 'bars'
+                                        ? 'bg-lime-400 text-[#030C0A]'
+                                        : 'text-emerald-200/70 hover:text-white'
                                     }`}
                             >
                                 Barras Comparativas
                             </button>
                         </div>
 
-                        <div className="flex flex-wrap gap-1 rounded-xl border border-slate-800 bg-[#090A0F] p-1 text-xs">
+                        <div className="flex flex-wrap gap-1 rounded-xl border border-emerald-900 bg-[#030C0A] p-1 text-xs">
                             {[
                                 { id: 'revenue', label: 'Ingresos ($)' },
                                 { id: 'orders', label: 'Pedidos (#)' },
@@ -428,7 +433,9 @@ export default function ExecutiveView({
                                 <button
                                     key={m.id}
                                     onClick={() => setMetricMode(m.id)}
-                                    className={`rounded-lg px-2.5 py-1 transition ${metricMode === m.id ? 'bg-violet-600 text-white' : 'text-slate-400 hover:text-white'
+                                    className={`rounded-lg px-2.5 py-1 font-bold transition ${metricMode === m.id
+                                            ? 'bg-emerald-500 text-[#030C0A]'
+                                            : 'text-emerald-200/70 hover:text-white'
                                         }`}
                                 >
                                     {m.label}
@@ -441,7 +448,6 @@ export default function ExecutiveView({
                 {chartStyle === 'area' ? (
                     <div className="overflow-x-auto">
                         <svg viewBox={`0 0 ${svgWidth} ${svgHeight}`} className="h-56 w-full min-w-[640px]">
-
                             <defs>
                                 <linearGradient id="tivaAreaGrad" x1="0" y1="0" x2="0" y2="1">
                                     <stop offset="0%" stopColor="#A3E635" stopOpacity="0.45" />
@@ -458,10 +464,10 @@ export default function ExecutiveView({
                                             y1={y}
                                             x2={svgWidth - padX}
                                             y2={y}
-                                            stroke="#1F2433"
+                                            stroke="#0F2E2A"
                                             strokeDasharray="4 4"
                                         />
-                                        <text x={6} y={y + 4} fill="#64748B" fontSize="10">
+                                        <text x={6} y={y + 4} fill="#6EE7B7" fontSize="10">
                                             {(maxChartVal * ratio).toFixed(0)}
                                         </text>
                                     </g>
@@ -471,7 +477,7 @@ export default function ExecutiveView({
                             <polygon points={areaPoints} fill="url(#tivaAreaGrad)" />
                             <polyline
                                 fill="none"
-                                stroke="#8B5CF6"
+                                stroke="#A3E635"
                                 strokeWidth="3"
                                 strokeLinecap="round"
                                 strokeLinejoin="round"
@@ -484,15 +490,15 @@ export default function ExecutiveView({
                                         cx={pt.x}
                                         cy={pt.y}
                                         r="5"
-                                        fill={pt.isProjected ? '#06B6D4' : '#A855F7'}
-                                        stroke="#090A0F"
+                                        fill={pt.isProjected ? '#10B981' : '#A3E635'}
+                                        stroke="#030C0A"
                                         strokeWidth="2"
                                     />
                                     <text
                                         x={pt.x}
                                         y={pt.y - 10}
                                         textAnchor="middle"
-                                        fill={pt.isProjected ? '#67E8F9' : '#E2E8F0'}
+                                        fill={pt.isProjected ? '#6EE7B7' : '#ECFCCB'}
                                         fontSize="10"
                                         fontWeight="bold"
                                     >
@@ -502,7 +508,7 @@ export default function ExecutiveView({
                                         x={pt.x}
                                         y={svgHeight - 6}
                                         textAnchor="middle"
-                                        fill={pt.isProjected ? '#38BDF8' : '#94A3B8'}
+                                        fill={pt.isProjected ? '#34D399' : '#A7F3D0'}
                                         fontSize="10"
                                     >
                                         {pt.shortLabel}
@@ -517,15 +523,15 @@ export default function ExecutiveView({
                             <div key={item.id} className="space-y-1">
                                 <div className="flex items-center justify-between text-xs">
                                     <div className="flex items-center gap-2">
-                                        <span className="font-medium text-slate-200">{item.fullLabel}</span>
+                                        <span className="font-medium text-emerald-100">{item.fullLabel}</span>
                                         {item.isProjected ? (
-                                            <span className="rounded bg-cyan-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-cyan-300">
+                                            <span className="rounded bg-emerald-500/20 px-1.5 py-0.5 text-[10px] font-bold text-emerald-300">
                                                 PROYECCIÓN
                                             </span>
                                         ) : (
                                             item.wowPct !== 0 && (
                                                 <span
-                                                    className={`inline-flex items-center text-[10px] font-semibold ${item.wowPct > 0 ? 'text-emerald-400' : 'text-rose-400'
+                                                    className={`inline-flex items-center text-[10px] font-bold ${item.wowPct > 0 ? 'text-lime-400' : 'text-rose-400'
                                                         }`}
                                                 >
                                                     {item.wowPct > 0 ? (
@@ -538,15 +544,15 @@ export default function ExecutiveView({
                                             )
                                         )}
                                     </div>
-                                    <strong className={item.isProjected ? 'text-cyan-300' : 'text-violet-300'}>
+                                    <strong className={item.isProjected ? 'text-emerald-300' : 'text-lime-300'}>
                                         {item.displayValue}
                                     </strong>
                                 </div>
-                                <div className="h-3 w-full overflow-hidden rounded-full bg-slate-800/90">
+                                <div className="h-3 w-full overflow-hidden rounded-full bg-[#030C0A]">
                                     <div
                                         className={`h-full rounded-full transition-all duration-500 ${item.isProjected
-                                            ? 'bg-gradient-to-r from-cyan-500 to-emerald-400'
-                                            : 'bg-gradient-to-r from-violet-600 to-cyan-500'
+                                                ? 'bg-gradient-to-r from-emerald-500 to-teal-400'
+                                                : 'bg-gradient-to-r from-lime-400 to-emerald-400'
                                             }`}
                                         style={{ width: `${Math.min(100, (item.value / maxChartVal) * 100)}%` }}
                                     />
@@ -559,14 +565,14 @@ export default function ExecutiveView({
 
             {/* Simulador Interactivo de Proyecciones + Anillos de Distribución */}
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-                <div className="rounded-2xl border border-violet-500/30 bg-[#12141D] p-5 lg:col-span-2">
+                <div className="rounded-2xl border border-lime-400/35 bg-[#071917]/90 p-5 shadow-xl lg:col-span-2">
                     <div className="mb-4 flex items-center justify-between">
                         <div>
-                            <h3 className="flex items-center gap-2 text-sm font-semibold text-white">
-                                <Sliders className="h-4 w-4 text-cyan-400" />
+                            <h3 className="flex items-center gap-2 text-sm font-bold text-white">
+                                <Sliders className="h-4 w-4 text-lime-400" />
                                 Simulador Dinámico de Proyecciones (Noviembre y Diciembre)
                             </h3>
-                            <p className="text-xs text-slate-400">
+                            <p className="text-xs text-emerald-200/70">
                                 Ajusta las variables para simular el cierre semanal y mensual de Tiva Design
                             </p>
                         </div>
@@ -576,17 +582,17 @@ export default function ExecutiveView({
                                 setSimTicketPct(0);
                                 setSimWeeklyAds(42);
                             }}
-                            className="rounded-lg border border-slate-700 bg-slate-800 px-2.5 py-1 text-[11px] text-slate-300 hover:text-white"
+                            className="rounded-lg border border-emerald-800 bg-[#030C0A] px-2.5 py-1 text-[11px] font-semibold text-emerald-100 hover:border-lime-400/50"
                         >
                             Restaurar Base
                         </button>
                     </div>
 
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                        <div className="rounded-xl border border-slate-800 bg-[#090A0F] p-3.5">
+                        <div className="rounded-xl border border-emerald-900 bg-[#030C0A] p-3.5">
                             <div className="flex justify-between text-xs">
-                                <span className="text-slate-400">Variación de Pedidos</span>
-                                <strong className="text-violet-300">
+                                <span className="text-emerald-200/70">Variación de Pedidos</span>
+                                <strong className="text-lime-400">
                                     {simVolumePct >= 0 ? `+${simVolumePct}%` : `${simVolumePct}%`}
                                 </strong>
                             </div>
@@ -597,17 +603,17 @@ export default function ExecutiveView({
                                 step="5"
                                 value={simVolumePct}
                                 onChange={(e) => setSimVolumePct(Number(e.target.value))}
-                                className="mt-2 w-full accent-violet-500"
+                                className="mt-2 w-full accent-lime-400"
                             />
-                            <p className="mt-1 text-[11px] text-slate-400">
+                            <p className="mt-1 text-[11px] text-emerald-200/60">
                                 Meta simulada: <strong className="text-white">{simWeeklyOrders} ventas/semana</strong>
                             </p>
                         </div>
 
-                        <div className="rounded-xl border border-slate-800 bg-[#090A0F] p-3.5">
+                        <div className="rounded-xl border border-emerald-900 bg-[#030C0A] p-3.5">
                             <div className="flex justify-between text-xs">
-                                <span className="text-slate-400">Ajuste Ticket / Upsell</span>
-                                <strong className="text-cyan-300">
+                                <span className="text-emerald-200/70">Ajuste Ticket / Upsell</span>
+                                <strong className="text-emerald-400">
                                     {simTicketPct >= 0 ? `+${simTicketPct}%` : `${simTicketPct}%`}
                                 </strong>
                             </div>
@@ -618,9 +624,9 @@ export default function ExecutiveView({
                                 step="5"
                                 value={simTicketPct}
                                 onChange={(e) => setSimTicketPct(Number(e.target.value))}
-                                className="mt-2 w-full accent-cyan-500"
+                                className="mt-2 w-full accent-emerald-400"
                             />
-                            <p className="mt-1 text-[11px] text-slate-400">
+                            <p className="mt-1 text-[11px] text-emerald-200/60">
                                 Ticket simulado:{' '}
                                 <strong className="text-white">
                                     ${(averageTicket * (1 + simTicketPct / 100)).toFixed(2)} USD
@@ -628,10 +634,10 @@ export default function ExecutiveView({
                             </p>
                         </div>
 
-                        <div className="rounded-xl border border-slate-800 bg-[#090A0F] p-3.5">
+                        <div className="rounded-xl border border-emerald-900 bg-[#030C0A] p-3.5">
                             <div className="flex justify-between text-xs">
-                                <span className="text-slate-400">Gasto Meta Ads / Sem</span>
-                                <strong className="text-emerald-400">${simWeeklyAds} USD</strong>
+                                <span className="text-emerald-200/70">Gasto Meta Ads / Sem</span>
+                                <strong className="text-lime-300">${simWeeklyAds} USD</strong>
                             </div>
                             <input
                                 type="range"
@@ -640,33 +646,33 @@ export default function ExecutiveView({
                                 step="3"
                                 value={simWeeklyAds}
                                 onChange={(e) => setSimWeeklyAds(Number(e.target.value))}
-                                className="mt-2 w-full accent-emerald-500"
+                                className="mt-2 w-full accent-lime-400"
                             />
-                            <p className="mt-1 text-[11px] text-slate-400">
+                            <p className="mt-1 text-[11px] text-emerald-200/60">
                                 ROAS estimado: <strong className="text-white">{projectedRoas.toFixed(1)}x</strong>
                             </p>
                         </div>
                     </div>
 
-                    <div className="mt-4 grid grid-cols-2 gap-3 rounded-xl border border-slate-800/90 bg-[#090A0F] p-4 sm:grid-cols-4">
+                    <div className="mt-4 grid grid-cols-2 gap-3 rounded-xl border border-emerald-900/80 bg-[#030C0A] p-4 sm:grid-cols-4">
                         <div>
-                            <span className="text-[11px] text-slate-400">Ingreso Semanal Proy.</span>
-                            <p className="mt-0.5 text-lg font-bold text-white">${simWeeklyRevenue.toFixed(2)} USD</p>
+                            <span className="text-[11px] text-emerald-200/60">Ingreso Semanal Proy.</span>
+                            <p className="mt-0.5 text-lg font-extrabold text-white">${simWeeklyRevenue.toFixed(2)} USD</p>
                         </div>
                         <div>
-                            <span className="text-[11px] text-slate-400">Pago a Vendedor / Sem</span>
-                            <p className="mt-0.5 text-lg font-bold text-cyan-400">${simWeeklyPayroll.toFixed(2)} USD</p>
-                            <span className="text-[10px] text-slate-400">
+                            <span className="text-[11px] text-emerald-200/60">Pago a Vendedor / Sem</span>
+                            <p className="mt-0.5 text-lg font-extrabold text-emerald-400">${simWeeklyPayroll.toFixed(2)} USD</p>
+                            <span className="text-[10px] text-emerald-200/60">
                                 {simWeeklyBonus > 0 ? 'Incluye Bono $10' : 'Sin Bono (<15 ops)'}
                             </span>
                         </div>
                         <div>
-                            <span className="text-[11px] text-slate-400">Utilidad Neta Semanal</span>
-                            <p className="mt-0.5 text-lg font-bold text-emerald-400">${simWeeklyNet.toFixed(2)} USD</p>
+                            <span className="text-[11px] text-emerald-200/60">Utilidad Neta Semanal</span>
+                            <p className="mt-0.5 text-lg font-extrabold text-lime-400">${simWeeklyNet.toFixed(2)} USD</p>
                         </div>
                         <div>
-                            <span className="text-[11px] text-slate-400">Proyección 4 Semanas</span>
-                            <p className="mt-0.5 text-lg font-bold text-violet-300">
+                            <span className="text-[11px] text-emerald-200/60">Proyección 4 Semanas</span>
+                            <p className="mt-0.5 text-lg font-extrabold text-lime-300">
                                 ${projected4WeeksRevenue.toFixed(2)} USD
                             </p>
                         </div>
@@ -674,15 +680,15 @@ export default function ExecutiveView({
                 </div>
 
                 {/* Gráficos Donut SVG */}
-                <div className="rounded-2xl border border-slate-800 bg-[#12141D] p-5">
-                    <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold text-white">
-                        <PieChart className="h-4 w-4 text-violet-400" />
+                <div className="rounded-2xl border border-emerald-900/70 bg-[#071917]/90 p-5 shadow-xl">
+                    <h3 className="mb-4 flex items-center gap-2 text-sm font-bold text-white">
+                        <PieChart className="h-4 w-4 text-lime-400" />
                         Distribución por Producto y Pago
                     </h3>
 
                     <div className="flex items-center gap-4">
                         <svg viewBox="0 0 42 42" className="h-28 w-28 shrink-0">
-                            <circle cx="21" cy="21" r="15.915" fill="transparent" stroke="#1E293B" strokeWidth="5" />
+                            <circle cx="21" cy="21" r="15.915" fill="transparent" stroke="#030C0A" strokeWidth="5" />
                             {productSegments.map((seg) => (
                                 <circle
                                     key={seg.name}
@@ -706,9 +712,9 @@ export default function ExecutiveView({
                                 <div key={seg.name} className="flex items-center justify-between">
                                     <div className="flex items-center gap-1.5">
                                         <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: seg.color }} />
-                                        <span className="font-medium text-slate-200">{seg.name}</span>
+                                        <span className="font-semibold text-white">{seg.name}</span>
                                     </div>
-                                    <span className="text-slate-300">
+                                    <span className="text-emerald-100/80">
                                         ${seg.amount.toFixed(0)} ({seg.pct.toFixed(1)}%)
                                     </span>
                                 </div>
@@ -716,20 +722,20 @@ export default function ExecutiveView({
                         </div>
                     </div>
 
-                    <div className="mt-5 border-t border-slate-800 pt-4">
-                        <h4 className="mb-2.5 text-xs font-semibold uppercase tracking-wider text-slate-400">
+                    <div className="mt-5 border-t border-emerald-900/70 pt-4">
+                        <h4 className="mb-2.5 text-xs font-bold uppercase tracking-wider text-emerald-200/70">
                             Participación por Método de Pago
                         </h4>
                         <div className="space-y-2">
                             {paymentSegments.map((seg) => (
                                 <div key={seg.name} className="space-y-1">
                                     <div className="flex justify-between text-xs">
-                                        <span className="text-slate-300">{seg.name}</span>
-                                        <span className="font-medium text-cyan-300">
+                                        <span className="text-emerald-100">{seg.name}</span>
+                                        <span className="font-bold text-lime-300">
                                             ${seg.amount.toFixed(2)} ({seg.pct.toFixed(1)}%)
                                         </span>
                                     </div>
-                                    <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-800">
+                                    <div className="h-1.5 w-full overflow-hidden rounded-full bg-[#030C0A]">
                                         <div
                                             className="h-full rounded-full"
                                             style={{ width: `${seg.pct}%`, backgroundColor: seg.color }}
@@ -742,16 +748,16 @@ export default function ExecutiveView({
                 </div>
             </div>
 
-            {/* NUEVO MÓDULO: Gestor Editable de Gastos Operativos Fijos en Vivo (Supabase) */}
-            <div className="rounded-2xl border border-slate-800 bg-[#12141D] p-5">
+            {/* Gestor Editable de Gastos Operativos Fijos en Vivo (Supabase) */}
+            <div className="rounded-2xl border border-emerald-900/70 bg-[#071917]/90 p-5 shadow-xl">
                 <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
                     <div>
-                        <h3 className="flex items-center gap-2 text-sm font-semibold text-white">
-                            <Receipt className="h-4 w-4 text-rose-400" />
+                        <h3 className="flex items-center gap-2 text-sm font-bold text-white">
+                            <Receipt className="h-4 w-4 text-lime-400" />
                             Gestor de Gastos Operativos Fijos en Vivo (Total: ${fixedExpensesTotal.toFixed(2)} USD)
                         </h3>
-                        <p className="text-xs text-slate-400">
-                            Añade, edita o elimina costos operativos en tiempo real dentro de Supabase; el P&L y el margen neto se recalculan al instante
+                        <p className="text-xs text-emerald-200/70">
+                            Añade, edita o elimina costos operativos en tiempo real dentro de Supabase; el P&L se recalcula al instante
                         </p>
                     </div>
                 </div>
@@ -762,29 +768,28 @@ export default function ExecutiveView({
                     </div>
                 )}
 
-                {/* Formulario para Añadir Nuevo Gasto Fijo */}
                 <form
                     onSubmit={handleCreateExpense}
-                    className="mb-5 grid grid-cols-1 gap-3 rounded-xl border border-slate-800/90 bg-[#090A0F] p-3.5 sm:grid-cols-2 lg:grid-cols-5"
+                    className="mb-5 grid grid-cols-1 gap-3 rounded-xl border border-emerald-900/80 bg-[#030C0A] p-3.5 sm:grid-cols-2 lg:grid-cols-5"
                 >
                     <div>
-                        <label className="mb-1 block text-[11px] text-slate-400">Concepto del Gasto</label>
+                        <label className="mb-1 block text-[11px] text-emerald-200/70">Concepto del Gasto</label>
                         <input
                             type="text"
                             placeholder="Ej. Publicidad Meta Ads"
                             value={expForm.concept}
                             onChange={(e) => setExpForm({ ...expForm, concept: e.target.value })}
-                            className="w-full rounded-lg border border-slate-800 bg-[#12141D] px-3 py-1.5 text-xs text-white focus:border-violet-500 focus:outline-none"
+                            className="w-full rounded-lg border border-emerald-900 bg-[#071917] px-3 py-1.5 text-xs text-white focus:border-lime-400 focus:outline-none"
                             required
                         />
                     </div>
 
                     <div>
-                        <label className="mb-1 block text-[11px] text-slate-400">Frecuencia</label>
+                        <label className="mb-1 block text-[11px] text-emerald-200/70">Frecuencia</label>
                         <select
                             value={expForm.frequency}
                             onChange={(e) => setExpForm({ ...expForm, frequency: e.target.value })}
-                            className="w-full rounded-lg border border-slate-800 bg-[#12141D] px-3 py-1.5 text-xs text-white focus:border-violet-500 focus:outline-none"
+                            className="w-full rounded-lg border border-emerald-900 bg-[#071917] px-3 py-1.5 text-xs text-white focus:border-lime-400 focus:outline-none"
                         >
                             <option value="Semanal">Semanal</option>
                             <option value="Mensual">Mensual</option>
@@ -795,33 +800,33 @@ export default function ExecutiveView({
                     </div>
 
                     <div>
-                        <label className="mb-1 block text-[11px] text-slate-400">Monto (USD)</label>
+                        <label className="mb-1 block text-[11px] text-emerald-200/70">Monto (USD)</label>
                         <input
                             type="number"
                             step="0.01"
                             placeholder="Ej. 42.00"
                             value={expForm.amount_usd}
                             onChange={(e) => setExpForm({ ...expForm, amount_usd: e.target.value })}
-                            className="w-full rounded-lg border border-slate-800 bg-[#12141D] px-3 py-1.5 text-xs text-white focus:border-violet-500 focus:outline-none"
+                            className="w-full rounded-lg border border-emerald-900 bg-[#071917] px-3 py-1.5 text-xs text-white focus:border-lime-400 focus:outline-none"
                             required
                         />
                     </div>
 
                     <div>
-                        <label className="mb-1 block text-[11px] text-slate-400">Detalle / Observaciones</label>
+                        <label className="mb-1 block text-[11px] text-emerald-200/70">Detalle / Observaciones</label>
                         <input
                             type="text"
                             placeholder="Ej. Campaña semanal Instagram"
                             value={expForm.notes}
                             onChange={(e) => setExpForm({ ...expForm, notes: e.target.value })}
-                            className="w-full rounded-lg border border-slate-800 bg-[#12141D] px-3 py-1.5 text-xs text-white focus:border-violet-500 focus:outline-none"
+                            className="w-full rounded-lg border border-emerald-900 bg-[#071917] px-3 py-1.5 text-xs text-white focus:border-lime-400 focus:outline-none"
                         />
                     </div>
 
                     <div className="flex items-end">
                         <button
                             type="submit"
-                            className="flex w-full items-center justify-center gap-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-cyan-600 px-3 py-2 text-xs font-semibold text-white shadow-md hover:opacity-95"
+                            className="flex w-full items-center justify-center gap-1.5 rounded-lg bg-gradient-to-r from-lime-400 to-emerald-400 px-3 py-2 text-xs font-extrabold text-[#030C0A] shadow-md hover:brightness-105"
                         >
                             <PlusCircle className="h-3.5 w-3.5" />
                             Añadir Gasto Fijo
@@ -829,11 +834,10 @@ export default function ExecutiveView({
                     </div>
                 </form>
 
-                {/* Tabla Editable de Gastos Fijos */}
                 <div className="overflow-x-auto">
                     <table className="w-full text-left text-xs">
                         <thead>
-                            <tr className="border-b border-slate-800 text-slate-400">
+                            <tr className="border-b border-emerald-900/70 text-emerald-200/60">
                                 <th className="pb-2.5 font-medium">Concepto</th>
                                 <th className="pb-2.5 font-medium">Frecuencia</th>
                                 <th className="pb-2.5 font-medium">Monto (USD)</th>
@@ -841,30 +845,30 @@ export default function ExecutiveView({
                                 <th className="pb-2.5 text-right font-medium">Acciones</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-800/60">
+                        <tbody className="divide-y divide-emerald-900/40">
                             {expenses.map((exp) => (
-                                <tr key={exp.id} className="hover:bg-slate-800/25">
-                                    <td className="py-2.5 font-medium text-white">
+                                <tr key={exp.id} className="hover:bg-emerald-950/40">
+                                    <td className="py-2.5 font-semibold text-white">
                                         {editingExpId === exp.id ? (
                                             <input
                                                 value={editingExpDraft.concept || ''}
                                                 onChange={(e) =>
                                                     setEditingExpDraft({ ...editingExpDraft, concept: e.target.value })
                                                 }
-                                                className="w-full rounded border border-slate-700 bg-slate-900 px-2 py-1 text-xs text-white"
+                                                className="w-full rounded border border-emerald-700 bg-[#030C0A] px-2 py-1 text-xs text-white"
                                             />
                                         ) : (
                                             exp.concept
                                         )}
                                     </td>
-                                    <td className="py-2.5 text-slate-300">
+                                    <td className="py-2.5 text-emerald-100">
                                         {editingExpId === exp.id ? (
                                             <select
                                                 value={editingExpDraft.frequency || 'Semanal'}
                                                 onChange={(e) =>
                                                     setEditingExpDraft({ ...editingExpDraft, frequency: e.target.value })
                                                 }
-                                                className="rounded border border-slate-700 bg-slate-900 px-2 py-1 text-xs text-white"
+                                                className="rounded border border-emerald-700 bg-[#030C0A] px-2 py-1 text-xs text-white"
                                             >
                                                 <option value="Semanal">Semanal</option>
                                                 <option value="Mensual">Mensual</option>
@@ -873,12 +877,12 @@ export default function ExecutiveView({
                                                 <option value="Único">Pago Único</option>
                                             </select>
                                         ) : (
-                                            <span className="rounded-md bg-slate-800 px-2 py-0.5 text-[11px] text-slate-300">
+                                            <span className="rounded-md bg-[#030C0A] px-2 py-0.5 text-[11px] text-lime-300">
                                                 {exp.frequency}
                                             </span>
                                         )}
                                     </td>
-                                    <td className="py-2.5 font-semibold text-rose-400">
+                                    <td className="py-2.5 font-bold text-rose-400">
                                         {editingExpId === exp.id ? (
                                             <input
                                                 type="number"
@@ -887,20 +891,20 @@ export default function ExecutiveView({
                                                 onChange={(e) =>
                                                     setEditingExpDraft({ ...editingExpDraft, amount_usd: e.target.value })
                                                 }
-                                                className="w-24 rounded border border-slate-700 bg-slate-900 px-2 py-1 text-xs text-white"
+                                                className="w-24 rounded border border-emerald-700 bg-[#030C0A] px-2 py-1 text-xs text-white"
                                             />
                                         ) : (
                                             `$${Number(exp.amount_usd).toFixed(2)} USD`
                                         )}
                                     </td>
-                                    <td className="py-2.5 text-slate-400">
+                                    <td className="py-2.5 text-emerald-200/70">
                                         {editingExpId === exp.id ? (
                                             <input
                                                 value={editingExpDraft.notes || ''}
                                                 onChange={(e) =>
                                                     setEditingExpDraft({ ...editingExpDraft, notes: e.target.value })
                                                 }
-                                                className="w-full rounded border border-slate-700 bg-slate-900 px-2 py-1 text-xs text-white"
+                                                className="w-full rounded border border-emerald-700 bg-[#030C0A] px-2 py-1 text-xs text-white"
                                             />
                                         ) : (
                                             exp.notes || '—'
@@ -912,13 +916,13 @@ export default function ExecutiveView({
                                                 <button
                                                     onClick={saveEditExpense}
                                                     title="Guardar cambios en Supabase"
-                                                    className="rounded bg-emerald-500/20 p-1 text-emerald-400 hover:bg-emerald-500/30"
+                                                    className="rounded bg-lime-400/20 p-1 text-lime-300 hover:bg-lime-400/30"
                                                 >
                                                     <Save className="h-3.5 w-3.5" />
                                                 </button>
                                                 <button
                                                     onClick={() => setEditingExpId(null)}
-                                                    className="rounded bg-slate-800 p-1 text-slate-400 hover:text-white"
+                                                    className="rounded bg-[#030C0A] p-1 text-emerald-200/60 hover:text-white"
                                                 >
                                                     <X className="h-3.5 w-3.5" />
                                                 </button>
@@ -928,14 +932,14 @@ export default function ExecutiveView({
                                                 <button
                                                     onClick={() => startEditExpense(exp)}
                                                     title="Editar gasto fijo"
-                                                    className="text-slate-400 hover:text-violet-400"
+                                                    className="text-emerald-200/60 hover:text-lime-400"
                                                 >
                                                     <Edit3 className="h-3.5 w-3.5" />
                                                 </button>
                                                 <button
                                                     onClick={() => confirmDeleteExpense(exp)}
                                                     title="Eliminar gasto fijo"
-                                                    className="text-slate-400 hover:text-rose-400"
+                                                    className="text-emerald-200/60 hover:text-rose-400"
                                                 >
                                                     <Trash2 className="h-3.5 w-3.5" />
                                                 </button>
@@ -950,15 +954,15 @@ export default function ExecutiveView({
             </div>
 
             {/* Control de Nómina y Liquidación Semanal al Vendedor */}
-            <div className="rounded-2xl border border-slate-800 bg-[#12141D] p-5">
-                <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-white">
-                    <Calendar className="h-4 w-4 text-violet-400" />
+            <div className="rounded-2xl border border-emerald-900/70 bg-[#071917]/90 p-5 shadow-xl">
+                <h3 className="mb-3 flex items-center gap-2 text-sm font-bold text-white">
+                    <Calendar className="h-4 w-4 text-lime-400" />
                     Control de Nómina y Liquidación Semanal al Vendedor (Lunes a Domingo)
                 </h3>
                 <div className="overflow-x-auto">
                     <table className="w-full text-left text-xs">
                         <thead>
-                            <tr className="border-b border-slate-800 text-slate-400">
+                            <tr className="border-b border-emerald-900/70 text-emerald-200/60">
                                 <th className="pb-2.5 font-medium">Semana</th>
                                 <th className="pb-2.5 font-medium">Fechas Calendario</th>
                                 <th className="pb-2.5 font-medium">Ventas</th>
@@ -970,23 +974,23 @@ export default function ExecutiveView({
                                 <th className="pb-2.5 text-right font-medium">Acción</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-800/60">
+                        <tbody className="divide-y divide-emerald-900/40">
                             {weeklyPayroll.map((w) => (
-                                <tr key={w.id} className="hover:bg-slate-800/25">
-                                    <td className="py-3 font-semibold text-white">{w.label}</td>
-                                    <td className="py-3 text-slate-300">{w.rangeText}</td>
-                                    <td className="py-3 text-slate-200">{w.orders} ops</td>
-                                    <td className="py-3 font-medium text-emerald-400">${w.revenue.toFixed(2)} USD</td>
-                                    <td className="py-3 text-cyan-400">${w.commission.toFixed(2)} USD</td>
-                                    <td className="py-3 text-violet-300">${w.bonus.toFixed(2)} USD</td>
-                                    <td className="py-3 font-bold text-white">${w.totalPay.toFixed(2)} USD</td>
+                                <tr key={w.id} className="hover:bg-emerald-950/40">
+                                    <td className="py-3 font-bold text-white">{w.label}</td>
+                                    <td className="py-3 text-emerald-100/80">{w.rangeText}</td>
+                                    <td className="py-3 text-white">{w.orders} ops</td>
+                                    <td className="py-3 font-bold text-lime-400">${w.revenue.toFixed(2)} USD</td>
+                                    <td className="py-3 text-emerald-300">${w.commission.toFixed(2)} USD</td>
+                                    <td className="py-3 text-lime-300">${w.bonus.toFixed(2)} USD</td>
+                                    <td className="py-3 font-extrabold text-white">${w.totalPay.toFixed(2)} USD</td>
                                     <td className="py-3">
                                         {w.isPaid ? (
-                                            <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/15 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-400">
+                                            <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/15 px-2.5 py-0.5 text-[11px] font-bold text-emerald-300">
                                                 <CheckCircle2 className="h-3 w-3" /> PAGADA
                                             </span>
                                         ) : (
-                                            <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/40 bg-amber-500/20 px-2.5 py-0.5 text-[11px] font-semibold text-amber-300">
+                                            <span className="inline-flex items-center gap-1 rounded-full border border-lime-400/40 bg-lime-400/15 px-2.5 py-0.5 text-[11px] font-bold text-lime-300">
                                                 <Clock className="h-3 w-3" /> POR PAGAR
                                             </span>
                                         )}
@@ -994,9 +998,9 @@ export default function ExecutiveView({
                                     <td className="py-3 text-right">
                                         <button
                                             onClick={() => onToggleWeekPaid(w.id)}
-                                            className={`rounded-lg px-2.5 py-1 text-[11px] font-medium transition ${w.isPaid
-                                                ? 'border border-slate-700 bg-slate-800 text-slate-300 hover:border-amber-500/50 hover:text-amber-300'
-                                                : 'bg-emerald-600 text-white hover:bg-emerald-500'
+                                            className={`rounded-lg px-2.5 py-1 text-[11px] font-bold transition ${w.isPaid
+                                                    ? 'border border-emerald-800 bg-[#030C0A] text-emerald-200 hover:border-lime-400/50 hover:text-lime-300'
+                                                    : 'bg-lime-400 text-[#030C0A] hover:brightness-105'
                                                 }`}
                                         >
                                             {w.isPaid ? 'Marcar Pendiente' : 'Marcar Pagada'}
@@ -1010,34 +1014,34 @@ export default function ExecutiveView({
             </div>
 
             {/* Auditoría General de Ventas con Filtros */}
-            <div className="rounded-2xl border border-slate-800 bg-[#12141D] p-5">
+            <div className="rounded-2xl border border-emerald-900/70 bg-[#071917]/90 p-5 shadow-xl">
                 <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-                    <h3 className="text-sm font-semibold text-white">
+                    <h3 className="text-sm font-bold text-white">
                         Auditoría General de Ventas ({filteredSales.length} registros filtrados)
                     </h3>
                     <div className="flex flex-wrap items-center gap-2">
                         <div className="relative">
-                            <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-slate-500" />
+                            <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-emerald-500" />
                             <input
                                 type="text"
                                 placeholder="Buscar cliente..."
                                 value={execSearch}
                                 onChange={(e) => setExecSearch(e.target.value)}
-                                className="rounded-xl border border-slate-800 bg-[#090A0F] pl-8 pr-3 py-1.5 text-xs text-white focus:border-violet-500 focus:outline-none"
+                                className="rounded-xl border border-emerald-900 bg-[#030C0A] pl-8 pr-3 py-1.5 text-xs text-white focus:border-lime-400 focus:outline-none"
                             />
                         </div>
                         <input
                             type="date"
                             value={startDateFilter}
                             onChange={(e) => setStartDateFilter(e.target.value)}
-                            className="rounded-xl border border-slate-800 bg-[#090A0F] px-3 py-1.5 text-xs text-white"
+                            className="rounded-xl border border-emerald-900 bg-[#030C0A] px-3 py-1.5 text-xs text-white"
                         />
-                        <span className="text-xs text-slate-500">hasta</span>
+                        <span className="text-xs text-emerald-200/60">hasta</span>
                         <input
                             type="date"
                             value={endDateFilter}
                             onChange={(e) => setEndDateFilter(e.target.value)}
-                            className="rounded-xl border border-slate-800 bg-[#090A0F] px-3 py-1.5 text-xs text-white"
+                            className="rounded-xl border border-emerald-900 bg-[#030C0A] px-3 py-1.5 text-xs text-white"
                         />
                     </div>
                 </div>
@@ -1045,7 +1049,7 @@ export default function ExecutiveView({
                 <div className="max-h-80 overflow-y-auto">
                     <table className="w-full text-left text-xs">
                         <thead>
-                            <tr className="border-b border-slate-800 text-slate-400">
+                            <tr className="border-b border-emerald-900/70 text-emerald-200/60">
                                 <th className="pb-2 font-medium">Fecha</th>
                                 <th className="pb-2 font-medium">Sem</th>
                                 <th className="pb-2 font-medium">Cliente</th>
@@ -1056,16 +1060,16 @@ export default function ExecutiveView({
                                 <th className="pb-2 text-right font-medium">Acción</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-800/60">
+                        <tbody className="divide-y divide-emerald-900/40">
                             {filteredSales.map((s) => (
-                                <tr key={s.id} className="hover:bg-slate-800/25">
-                                    <td className="py-2 text-slate-300">{s.sale_date}</td>
-                                    <td className="py-2 text-slate-400">S{s.week_id}</td>
-                                    <td className="py-2 font-medium text-white">{s.client_name}</td>
-                                    <td className="py-2 text-violet-300">{s.product}</td>
-                                    <td className="py-2 text-slate-300">{s.channel || 'Meta Ads'}</td>
-                                    <td className="py-2 text-cyan-300">{s.payment_method}</td>
-                                    <td className="py-2 font-semibold text-emerald-400">${Number(s.price_usd).toFixed(2)}</td>
+                                <tr key={s.id} className="hover:bg-emerald-950/40">
+                                    <td className="py-2 text-emerald-100/80">{s.sale_date}</td>
+                                    <td className="py-2 text-emerald-200/60">S{s.week_id}</td>
+                                    <td className="py-2 font-semibold text-white">{s.client_name}</td>
+                                    <td className="py-2 text-lime-300">{s.product}</td>
+                                    <td className="py-2 text-emerald-100/80">{s.channel || 'Meta Ads'}</td>
+                                    <td className="py-2 text-emerald-300">{s.payment_method}</td>
+                                    <td className="py-2 font-bold text-lime-400">${Number(s.price_usd).toFixed(2)}</td>
                                     <td className="py-2 text-right">
                                         <button
                                             onClick={() => {
